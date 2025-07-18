@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Paper,
@@ -17,24 +17,31 @@ import EnhancedUserTable from "./components/table/enhancedExternalUserTable";
 import { Column, Order } from "@components/ui/table/TableLayouts";
 import { User } from "@/types/user";
 import { useUnsubscribedUsers } from "@/hooks/api/user/useUnsubscribedUsers";
-
-const columns: Column<User>[] = [
-  { field: "name", label: "Name", minWidth: 180 },
-  { field: "email", label: "Email", minWidth: 200 },
-  { field: "number", label: "Phone", minWidth: 140 },
-  { field: "userType", label: "Type", minWidth: 120 },
-  { field: "hasSubscription", label: "Subscription", minWidth: 130 },
-  { field: "province", label: "Province", minWidth: 140 },
-  { field: "city", label: "City", minWidth: 140 },
-  { field: "createdAt", label: "Registered On", minWidth: 140 },
-  { field: "updatedAt", label: "Last Updated", minWidth: 140 },
-];
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 type SubFilter = "all" | "subscribed" | "free";
 
 const UserAdministrationPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { lang } = useLanguage();
+  const isAr = lang === "ar";
+
+  // translate your column headers here if needed:
+  const columns: Column<User>[] = useMemo(
+    () => [
+      { field: "name", label: isAr ? "الاسم" : "Name", minWidth: 180 },
+      { field: "email", label: isAr ? "البريد الإلكتروني" : "Email", minWidth: 200 },
+      { field: "number", label: isAr ? "الهاتف" : "Phone", minWidth: 140 },
+      { field: "userType", label: isAr ? "النوع" : "Type", minWidth: 120 },
+      { field: "hasSubscription", label: isAr ? "الاشتراك" : "Subscription", minWidth: 130 },
+      { field: "province", label: isAr ? "المحافظة" : "Province", minWidth: 140 },
+      { field: "city", label: isAr ? "المدينة" : "City", minWidth: 140 },
+      { field: "createdAt", label: isAr ? "تاريخ التسجيل" : "Registered On", minWidth: 140 },
+      { field: "updatedAt", label: isAr ? "آخر تحديث" : "Last Updated", minWidth: 140 },
+    ],
+    [isAr]
+  );
 
   const { users, loading, error } = useUnsubscribedUsers();
   const [order, setOrder] = useState<Order>("asc");
@@ -51,7 +58,9 @@ const UserAdministrationPage: React.FC = () => {
 
   const filtered = users.filter((u) => {
     if (subFilter === "all") return true;
-    return subFilter === "subscribed" ? u.hasSubscription : !u.hasSubscription;
+    return subFilter === "subscribed"
+      ? u.hasSubscription
+      : !u.hasSubscription;
   });
 
   if (loading) return <CircularProgress />;
@@ -71,12 +80,15 @@ const UserAdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
+        {/* Page Title */}
         <Typography variant="h6">
-          Users&nbsp;
+          {isAr ? "المستخدمون" : "Users"}{" "}
           <Typography component="span" color="primary">
             ({filtered.length})
           </Typography>
         </Typography>
+
+        {/* Filter buttons */}
         <ToggleButtonGroup
           value={subFilter}
           exclusive
@@ -98,15 +110,15 @@ const UserAdministrationPage: React.FC = () => {
         >
           <ToggleButton value="all">
             <PersonIcon sx={{ mr: 1 }} />
-            All
+            {isAr ? "الكل" : "All"}
           </ToggleButton>
           <ToggleButton value="subscribed">
             <CheckCircleIcon sx={{ mr: 1 }} />
-            Subscribed
+            {isAr ? "مشترك" : "Subscribed"}
           </ToggleButton>
           <ToggleButton value="free">
             <CancelIcon sx={{ mr: 1 }} />
-            Free
+            {isAr ? "مجاني" : "Free"}
           </ToggleButton>
         </ToggleButtonGroup>
       </Paper>

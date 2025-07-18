@@ -45,7 +45,7 @@ export interface Ad extends CommonAd {
   priceSYP: number;
   priceUSD: number;
   rentalPeriods: RentalPeriod[];
-  adImage: ImageFile[]; 
+  images: ImageFile[]; 
 }
 
 export interface AdsResponseData {

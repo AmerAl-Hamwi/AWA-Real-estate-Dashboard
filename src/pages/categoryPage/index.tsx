@@ -21,6 +21,8 @@ import { useCategory } from "@hooks/api/category/useGetAllCategory";
 import { useDeleteCategory } from "@hooks/api/category/useDeleteCategory";
 import { useAddEditCategory } from "@hooks/api/category/useAddEditCategory";
 
+import { useLanguage } from "@/contexts/language/LanguageContext";
+
 interface Category {
   id: string;
   "name[en]": string;
@@ -29,6 +31,9 @@ interface Category {
 }
 
 const CategoryPage: React.FC = () => {
+  const { lang } = useLanguage();
+  const isAr = lang === "ar";
+
   const { categories, loading, error, refetch } = useCategory();
   const [localCategories, setLocalCategories] = useState(categories);
   const [openForm, setOpenForm] = useState(false);
@@ -36,7 +41,6 @@ const CategoryPage: React.FC = () => {
   const [openDelete, setOpenDelete] = useState(false);
   const [deleteCat, setDeleteCat] = useState<Category | null>(null);
 
-  // refill local list whenever remote changes
   useEffect(() => {
     setLocalCategories(categories);
   }, [categories]);
@@ -45,37 +49,10 @@ const CategoryPage: React.FC = () => {
     refetch();
     setOpenDelete(false);
   });
-
   const { handleAddCategory, handleEditCategory } = useAddEditCategory(() => {
     setOpenForm(false);
     refetch();
   });
-
-  const handleAddClick = () => {
-    setEditCategory(null);
-    setOpenForm(true);
-  };
-  const handleEditClick = (cat: Category) => {
-    setEditCategory(cat);
-    setOpenForm(true);
-  };
-  const handleSave = (formData: FormData) => {
-    if (editCategory) {
-      handleEditCategory(editCategory.id, formData);
-    } else {
-      handleAddCategory(formData);
-    }
-  };
-
-  const handleDeleteClick = (cat: Category) => {
-    setDeleteCat(cat);
-    setOpenDelete(true);
-  };
-  const handleConfirmDelete = () => {
-    if (deleteCat) {
-      triggerDeleteCategory(deleteCat.id);
-    }
-  };
 
   if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error.message}</Alert>;
@@ -89,72 +66,38 @@ const CategoryPage: React.FC = () => {
         mb={4}
       >
         <Typography variant="h4" fontWeight={600}>
-          Categories
+          {isAr ? "الفئات" : "Categories"}
         </Typography>
-        <Button variant="contained" size="large" onClick={handleAddClick}>
-          Add New Category
+        <Button variant="contained" size="large" onClick={() => { setEditCategory(null); setOpenForm(true); }}>
+          {isAr ? "إضافة فئة جديدة" : "Add New Category"}
         </Button>
       </Box>
 
       <Grid container spacing={3}>
         {localCategories.map((cat) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={cat.id}>
-            <Card
-              sx={{
-                p: 0.5,
-                borderRadius: 3,
-                boxShadow: 3,
-                transition: "all 0.3s ease",
-                "&:hover": {
-                  boxShadow: 6,
-                  transform: "translateY(-2px)",
-                },
-              }}
-            >
+          <Grid size={{xs:12, sm: 6, md:3}} key={cat.id}>
+            <Card sx={{ p: 0.5, borderRadius: 3, boxShadow: 3, "&:hover": { boxShadow: 6, transform: "translateY(-2px)" } }}>
               <CardContent sx={{ pb: 0 }}>
-                <Typography
-                  variant="subtitle1"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  English Name
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  {isAr ? "الاسم (إنجليزي)" : "English Name"}
                 </Typography>
                 <Typography variant="h6" fontWeight={500} gutterBottom>
                   {cat["name[en]"]}
                 </Typography>
 
-                <Typography
-                  variant="subtitle1"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Arabic Name
+                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                  {isAr ? "الاسم (عربي)" : "Arabic Name"}
                 </Typography>
                 <Typography variant="h6" fontWeight={500}>
                   {cat["name[ar]"]}
                 </Typography>
               </CardContent>
 
-              <CardActions
-                sx={{
-                  mt: 2,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  pt: 0,
-                }}
-              >
-                <IconButton
-                  aria-label="edit"
-                  color="primary"
-                  onClick={() => handleEditClick(cat)}
-                >
-                  <EditIcon style={{ color: "black" }} />
+              <CardActions sx={{ mt: 2, display: "flex", justifyContent: "flex-end", pt: 0 }}>
+                <IconButton aria-label="edit" onClick={() => { setEditCategory(cat); setOpenForm(true); }}>
+                  <EditIcon />
                 </IconButton>
-                <IconButton
-                  aria-label="delete"
-                  color="error"
-                  onClick={() => handleDeleteClick(cat)}
-                >
+                <IconButton aria-label="delete" color="error" onClick={() => { setDeleteCat(cat); setOpenDelete(true); }}>
                   <DeleteIcon />
                 </IconButton>
               </CardActions>
@@ -163,19 +106,21 @@ const CategoryPage: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Dialogs */}
       <CategoryFormDialog
         open={openForm}
         initialData={editCategory}
         onClose={() => setOpenForm(false)}
-        onSave={handleSave}
+        onSave={(formData) => {
+          if (editCategory) handleEditCategory(editCategory.id, formData);
+          else handleAddCategory(formData);
+        }}
       />
 
       <DeleteConfirmDialog
         open={openDelete}
-        categoryName={deleteCat?.["name[en]"]}
+        categoryName={deleteCat?.[isAr ? "name[ar]" : "name[en]"]}
         onClose={() => setOpenDelete(false)}
-        onDelete={handleConfirmDelete}
+        onDelete={() => deleteCat && triggerDeleteCategory(deleteCat.id)}
       />
     </Box>
   );

@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import { Box, Button, Alert, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-
 import LoadingScreen from "@components/ui/loader/loadingScreen";
 import EnhancedBannerTable from "./components/table/EnhanceTable";
 import BannerDialog from "./components/modal/BannerDialog";
-
 import { useBanners } from "@hooks/api/banner/useGetAllBanner";
 import { useCreateBanner } from "@hooks/api/banner/useAddBanner";
 import { useDeleteBanner } from "@hooks/api/banner/useDeleteBanner";
 import { useUpdateBanner } from "@hooks/api/banner/useEditBanner";
-
 import { FormattedBanner, BannerPayload } from "@/types/banner";
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 const BannerPage: React.FC = () => {
+  const { lang } = useLanguage();
+  const isAr = lang === "ar";
+
   const {
     data: banners,
     total,
@@ -32,13 +33,10 @@ const BannerPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [initial, setInitial] = useState<BannerPayload | undefined>(undefined);
 
-  // open empty dialog for "Add"
   const handleAddClick = () => {
     setInitial(undefined);
     setDialogOpen(true);
   };
-
-  // open with existing banner for "Edit"
   const handleEditClick = (id: string) => {
     const b = banners.find((x) => x.id === id);
     if (!b) return;
@@ -51,30 +49,17 @@ const BannerPage: React.FC = () => {
     setDialogOpen(true);
   };
 
-  // both create & update funnel through here
   const handleDialogSubmit = async (payload: BannerPayload) => {
     try {
       if (payload.id) {
-        // EDIT
-        await updateBanner(payload.id, {
-          type: payload.type,
-          title: payload.title,
-          body: payload.body,
-          imageFile: payload.imageFile,
-        });
+        await updateBanner(payload.id, payload);
       } else {
-        // CREATE
-        await createBanner({
-          type: payload.type,
-          title: payload.title,
-          body: payload.body,
-          imageFile: payload.imageFile,
-        });
+        await createBanner(payload);
       }
       await refetch();
       setDialogOpen(false);
     } catch {
-      // errors are shown via toaster
+      /* toasters show errors */
     }
   };
 
@@ -84,14 +69,16 @@ const BannerPage: React.FC = () => {
   return (
     <Box sx={{ p: 4, position: "relative" }}>
       <Box display="flex" justifyContent="space-between" mb={2}>
-        <Typography variant="h4">Banner Management</Typography>
+        <Typography variant="h4">
+          {isAr ? "إدارة البانرات" : "Banner Management"}
+        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleAddClick}
-          sx={{ color: "white"}}
+          sx={{ color: "white" }}
         >
-          Add Banner
+          {isAr ? "إضافة بانر" : "Add Banner"}
         </Button>
       </Box>
 
@@ -99,10 +86,26 @@ const BannerPage: React.FC = () => {
 
       <EnhancedBannerTable<FormattedBanner>
         columns={[
-          { field: "imageUrl", label: "Image", minWidth: 150 },
-          { field: "title", label: "Title", minWidth: 120 },
-          { field: "body", label: "Body", minWidth: 200 },
-          { field: "type", label: "Type", minWidth: 100 },
+          {
+            field: "imageUrl",
+            label: isAr ? "الصورة" : "Image",
+            minWidth: 150,
+          },
+          {
+            field: "title",
+            label: isAr ? "العنوان" : "Title",
+            minWidth: 120,
+          },
+          {
+            field: "body",
+            label: isAr ? "المحتوى" : "Body",
+            minWidth: 200,
+          },
+          {
+            field: "type",
+            label: isAr ? "النوع" : "Type",
+            minWidth: 100,
+          },
         ]}
         data={banners}
         count={total}

@@ -149,7 +149,7 @@ export default function EditAdPagePreview() {
 
     // images
     setExistingImages(
-      ad.adImage?.map((img) => ({ id: img.id, url: img.url })) || []
+      ad.images?.map((img) => ({ id: img.id, url: img.url })) || []
     );
     setNewImages([]);
   }, [ad, categories.categories, amenitiesList, initialRentalPeriods]);

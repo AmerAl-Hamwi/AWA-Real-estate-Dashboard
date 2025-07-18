@@ -6,6 +6,7 @@ import {
   DialogTitle,
   Button,
 } from "@mui/material";
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -20,16 +21,25 @@ export default function DeleteConfirmDialog({
   onClose,
   onDelete,
 }: DeleteConfirmDialogProps) {
+  const { lang } = useLanguage();
+  const isAr = lang === "ar";
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Delete Category</DialogTitle>
+      <DialogTitle>
+        {isAr ? "حذف الفئة" : "Delete Category"}
+      </DialogTitle>
       <DialogContent>
-        Are you sure you want to delete “{categoryName}”?
+        {isAr
+          ? `هل أنت متأكد من حذف “${categoryName}”؟`
+          : `Are you sure you want to delete “${categoryName}”?`}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>
+          {isAr ? "إلغاء" : "Cancel"}
+        </Button>
         <Button color="error" variant="contained" onClick={onDelete}>
-          Yes, Delete
+          {isAr ? "نعم، احذف" : "Yes, Delete"}
         </Button>
       </DialogActions>
     </Dialog>

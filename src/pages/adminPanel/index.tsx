@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, Divider, Chip, Alert } from "@mui/material";
+import { Box, Divider, Alert } from "@mui/material";
 import LoadingScreen from "@components/ui/loader/loadingScreen";
 import { Order } from "@components/ui/table/TableLayouts";
 import EnhancedPropertyTable from "./components/table/EnhanceTable";
@@ -8,12 +8,17 @@ import { useRequiredEstate } from "@hooks/api/ads/useRequiredEstate";
 import { useAdActions } from "@/hooks/api/ads/useAdActions";
 import { Ad, AdRequire } from "@/types/property";
 import {
-  saleColumns,
-  rentColumns,
-  requireColumns,
+  getSaleColumns,
+  getRentColumns,
+  getRequireColumns,
 } from "./components/data/column";
+import SectionHeader from "./components/common/SectionHeader";
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 const AdminPannel: React.FC = () => {
+  const { lang } = useLanguage();
+  // const isRtl = lang === "ar";
+
   // 1) Fetch all ads, paginated
   const {
     ads,
@@ -107,35 +112,14 @@ const AdminPannel: React.FC = () => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4, pb: 4 }}>
       <>
         {/* —— Sale Ads Section —— */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            p: 3,
-            backgroundColor: "background.paper",
-            borderRadius: 1,
-            boxShadow: 1,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h5" fontWeight="600" color="primary.main">
-              Pending Sale Listings
-            </Typography>
-            <Chip
-              label="Awaiting Approval"
-              color="warning"
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            {saleAds.length} properties requiring review before publication
-          </Typography>
-        </Box>
+        <SectionHeader
+          titleEn="Pending Sale Listings"
+          titleAr="قائمة المبيعات المعلقة"
+          count={saleAds.length}
+        />
 
         <EnhancedPropertyTable
-          columns={saleColumns}
+          columns={getSaleColumns(lang)}
           data={saleAds}
           count={saleAds.length}
           page={saleCurrentPage - 1}
@@ -156,35 +140,15 @@ const AdminPannel: React.FC = () => {
 
         <Divider sx={{ my: 1 }} />
 
-        {/* —— Rent Ads Section —— */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            p: 3,
-            backgroundColor: "background.paper",
-            borderRadius: 1,
-            boxShadow: 1,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h5" fontWeight="600" color="primary.main">
-              Pending Rental Listings
-            </Typography>
-            <Chip
-              label="Awaiting Approval"
-              color="warning"
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            {rentAds.length} properties requiring review before publication
-          </Typography>
-        </Box>
+        {/* Rent */}
+        <SectionHeader
+          titleEn="Pending Rental Listings"
+          titleAr="قائمة الإيجارات المعلقة"
+          count={rentAds.length}
+        />
+
         <EnhancedPropertyTable
-          columns={rentColumns}
+          columns={getRentColumns(lang)}
           data={rentAds}
           count={rentAds.length}
           page={saleCurrentPage - 1}
@@ -206,35 +170,14 @@ const AdminPannel: React.FC = () => {
         <Divider sx={{ my: 1 }} />
 
         {/* —— Require Ads Section —— */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            p: 3,
-            backgroundColor: "background.paper",
-            borderRadius: 1,
-            boxShadow: 1,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h5" fontWeight="600" color="primary.main">
-              Pending Require Listings
-            </Typography>
-            <Chip
-              label="Awaiting Approval"
-              color="warning"
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Box>
-          <Typography variant="body2" color="text.secondary">
-            {requireAds.length} requirements requiring review before publication
-          </Typography>
-        </Box>
+        <SectionHeader
+          titleEn="Pending Require Listings"
+          titleAr="قائمة الطلبات المعلقة"
+          count={requireAds.length}
+        />
 
-        <EnhancedPropertyTable<AdRequire>
-          columns={requireColumns}
+        <EnhancedPropertyTable
+          columns={getRequireColumns(lang)}
           data={requireAds}
           count={requireAds.length}
           page={requireCurrentPage - 1}

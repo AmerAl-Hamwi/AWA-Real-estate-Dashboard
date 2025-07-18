@@ -5,30 +5,36 @@ import {
   HelpOutline as HelpIcon,
   ExitToApp as LogoutIcon,
 } from "@mui/icons-material";
-import { menuItems } from "./variable/menuItems";
+import { menuItems, MenuItemDef } from "./variable/menuItems";
 import { useToasterContext } from "@contexts/toaster/useToasterContext";
 import { useAuthService } from "@hooks/api/auth/useAuthService";
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 interface SidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
 }
 
+interface FooterItem {
+  icon: React.ElementType;
+  onClick: () => void;
+  labelEn: string;
+  labelAr: string;
+}
+
 const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
   const navigate = useNavigate();
-  const { showToaster } = useToasterContext();
-  const { logout } = useAuthService();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { showToaster } = useToasterContext();
+  const { logout } = useAuthService();
+  const { lang } = useLanguage();
   const [showLabels, setShowLabels] = useState(!isCollapsed);
 
   useEffect(() => {
-    if (!isCollapsed) {
-      setTimeout(() => setShowLabels(true), 200);
-    } else {
-      setShowLabels(false);
-    }
+    if (!isCollapsed) setTimeout(() => setShowLabels(true), 200);
+    else setShowLabels(false);
   }, [isCollapsed]);
 
   // Determine width: on mobile, full or zero; on desktop, collapsedWidth or fullWidth
@@ -44,9 +50,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
     }
   };
 
+  const footerItems: FooterItem[] = [
+    {
+      icon: HelpIcon,
+      onClick: () => {
+        /* show help */
+      },
+      labelEn: "Help",
+      labelAr: "مساعدة",
+    },
+    {
+      icon: LogoutIcon,
+      onClick: () => handleLogout(),
+      labelEn: "Log out",
+      labelAr: "تسجيل الخروج",
+    },
+  ];
+
   return (
     <>
-      {/* Backdrop for mobile when open */}
       {isMobile && !isCollapsed && (
         <Box
           onClick={() => setIsCollapsed(true)}
@@ -61,7 +83,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           }}
         />
       )}
-
       <Box
         component="nav"
         sx={{
@@ -70,19 +91,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
           left: 0,
           height: "100vh",
           width,
-          bgcolor: theme.palette.background.paper,
-          color: theme.palette.text.primary,
+          bgcolor: "background.paper",
+          color: "text.primary",
           borderRight: 1,
-          borderColor: theme.palette.divider,
+          borderColor: "divider",
           display: "flex",
           flexDirection: "column",
           transition: "width 0.3s ease",
-          boxShadow: theme.shadows[4],
+          boxShadow: 4,
           zIndex: 30,
           overflowX: "hidden",
         }}
       >
-        {/* Header */}
+        {/* header omitted for brevity */}
         <Box
           sx={{
             display: "flex",
@@ -130,15 +151,64 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
 
         {/* Menu */}
         <Box sx={{ flexGrow: 1, px: 2, overflowY: "auto" }}>
-          {menuItems.map(({ icon: Icon, label, route }) => {
-            const selected = location.pathname === route;
+          {menuItems.map(
+            ({ icon: Icon, route, labelEn, labelAr }: MenuItemDef) => {
+              const selected = location.pathname === route;
+              const label = lang === "ar" ? labelAr : labelEn;
+              return (
+                <Box
+                  key={route}
+                  onClick={() => {
+                    navigate(route);
+                    if (isMobile) setIsCollapsed(true);
+                  }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    px: 1,
+                    py: 1,
+                    mb: 1,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    bgcolor: selected ? "primary.dark" : "transparent",
+                    color: selected ? "background.default" : "text.primary",
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                      color: "background.default",
+                    },
+                    transition: "background-color 0.2s, color 0.2s",
+                  }}
+                >
+                  <Icon fontSize="medium" />
+                  {width > 73 && (
+                    <Box
+                      component="span"
+                      sx={{
+                        ml: 1,
+                        opacity: showLabels ? 1 : 0,
+                        transform: showLabels
+                          ? "translateX(0)"
+                          : "translateX(-8px)",
+                        transition: "opacity 0.2s, transform 0.2s",
+                      }}
+                    >
+                      {label}
+                    </Box>
+                  )}
+                </Box>
+              );
+            }
+          )}
+        </Box>
+
+        {/* Footer */}
+        <Box sx={{ px: 2, pb: 2 }}>
+          {footerItems.map(({ icon: Icon, onClick, labelEn, labelAr }) => {
+            const label = lang === "ar" ? labelAr : labelEn;
             return (
               <Box
-                key={label}
-                onClick={() => {
-                  navigate(route);
-                  if (isMobile) setIsCollapsed(true);
-                }}
+                key={labelEn}
+                onClick={onClick}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -147,12 +217,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
                   mb: 1,
                   borderRadius: 2,
                   cursor: "pointer",
-                  bgcolor: selected
-                    ? theme.palette.primary.dark
-                    : "transparent",
-                  color: selected
-                    ? theme.palette.background.default
-                    : theme.palette.text.primary,
                   "&:hover": {
                     bgcolor: theme.palette.primary.dark,
                     color: theme.palette.background.default,
@@ -179,54 +243,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               </Box>
             );
           })}
-        </Box>
-
-        {/* Footer */}
-        <Box sx={{ px: 2, pb: 2 }}>
-          {[
-            {
-              icon: HelpIcon,
-              label: "Help",
-              onClick: () => {},
-            },
-            { icon: LogoutIcon, label: "Log out", onClick: handleLogout },
-          ].map(({ icon: Icon, label, onClick }) => (
-            <Box
-              key={label}
-              onClick={onClick}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                px: 1,
-                py: 1,
-                mb: 1,
-                borderRadius: 2,
-                cursor: "pointer",
-                "&:hover": {
-                  bgcolor: theme.palette.primary.dark,
-                  color: theme.palette.background.default,
-                },
-                transition: "background-color 0.2s, color 0.2s",
-              }}
-            >
-              <Icon fontSize="medium" />
-              {width > 73 && (
-                <Box
-                  component="span"
-                  sx={{
-                    ml: 1,
-                    opacity: showLabels ? 1 : 0,
-                    transform: showLabels
-                      ? "translateX(0)"
-                      : "translateX(-8px)",
-                    transition: "opacity 0.2s, transform 0.2s",
-                  }}
-                >
-                  {label}
-                </Box>
-              )}
-            </Box>
-          ))}
         </Box>
       </Box>
     </>

@@ -6,30 +6,42 @@ import {
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 
-export const menuItems = [
+export interface MenuItemDef {
+  icon: React.ElementType;
+  route: string;
+  labelEn: string;
+  labelAr: string;
+}
+
+export const menuItems: MenuItemDef[] = [
   {
     icon: HomeWorkIcon,
-    label: "Property Approvals",
     route: "/",
+    labelEn: "Property Approvals",
+    labelAr: "الموافقات على العقارات",
   },
   {
     icon: CheckCircleIcon,
-    label: "Approved Estates",
     route: "/approved-estates",
+    labelEn: "Approved Estates",
+    labelAr: "العقارات المعتمدة",
   },
   {
     icon: CategoryIcon,
-    label: "Category",
     route: "/category-management",
+    labelEn: "Category",
+    labelAr: "إدارة الفئات",
   },
   {
     icon: UserManagementIcon,
-    label: "User Management",
     route: "/user/get-all-users",
+    labelEn: "User Management",
+    labelAr: "إدارة المستخدمين",
   },
   {
     icon: BannerIcon,
-    label: "Banner Management",
     route: "/get-all-banners",
+    labelEn: "Banner Management",
+    labelAr: "إدارة البانرات",
   },
 ];

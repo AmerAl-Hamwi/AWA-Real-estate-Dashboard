@@ -2,9 +2,7 @@ import React, { useState } from "react";
 // import { useNavigate } from "react-router-dom";
 import {
   Box,
-  Typography,
   Divider,
-  Chip,
   Alert,
   Button,
   Menu,
@@ -20,12 +18,19 @@ import { useRequiredEstate } from "@hooks/api/ads/useRequiredEstate";
 import { useAds } from "@hooks/api/ads/useAds";
 import { Ad, AdRequire } from "@/types/property";
 import {
-  saleColumns,
-  rentColumns,
-  requireColumns,
+  saleColumns as saleDefs,
+  rentColumns as rentDefs,
+  requireColumns as requireDefs,
 } from "./components/data/column";
+import LocalizedSectionHeader from "./components/common/LocalizedSectionHeader";
+import { useLanguage } from "@/contexts/language/LanguageContext";
+import { useLocalizedColumns } from "@/utils/localizeColumns";
 
 const ApprovalEstate: React.FC = () => {
+  const { lang } = useLanguage();
+  const saleColumns = useLocalizedColumns(saleDefs);
+  const rentColumns = useLocalizedColumns(rentDefs);
+  const requireCols = useLocalizedColumns(requireDefs);
   // const navigate = useNavigate();
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(
     null
@@ -33,8 +38,17 @@ const ApprovalEstate: React.FC = () => {
   const [adTypeFilter, setAdTypeFilter] = useState<
     "All" | "Regular" | "Premium"
   >("All");
-  const { ads, refetch, pages, currentPage, limit, loading, error, setPage, setLimit } =
-    useAds(1, 5);
+  const {
+    ads,
+    refetch,
+    pages,
+    currentPage,
+    limit,
+    loading,
+    error,
+    setPage,
+    setLimit,
+  } = useAds(1, 5);
 
   const {
     ads: requireAdsRaw,
@@ -103,41 +117,14 @@ const ApprovalEstate: React.FC = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4, pb: 4 }}>
       {/* —— Sale Ads Section —— */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          p: 3,
-          backgroundColor: "background.paper",
-          borderRadius: 1,
-          boxShadow: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Left side: title and status */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h5" fontWeight={600} color="primary.main">
-              Approved Sale Listings
-            </Typography>
-            <Chip
-              label="Approved by Admin"
-              color="success"
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Box>
-
-          {/* Right side: filter button */}
-          <Box>
+      <LocalizedSectionHeader
+        titleEn="Approved Sale Listings"
+        titleAr="قائمة المبيعات الموافق عليها"
+        countTextEn="properties after publication"
+        countTextAr="عقار بعد النشر"
+        count={saleAds.length}
+        showFilterButton={
+          <>
             <Button
               variant="outlined"
               startIcon={<FilterAltIcon />}
@@ -154,7 +141,7 @@ const ApprovalEstate: React.FC = () => {
                 },
               }}
             >
-              Filter
+              {lang === "ar" ? "الفلترة" : "Filter"}
             </Button>
             <Menu
               anchorEl={filterAnchorEl}
@@ -169,12 +156,9 @@ const ApprovalEstate: React.FC = () => {
                 Premium
               </MenuItem>
             </Menu>
-          </Box>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {saleAds.length} properties after publication
-        </Typography>
-      </Box>
+          </>
+        }
+      />
       <EnhancedPropertyTable
         columns={saleColumns}
         data={filteredSaleAds}
@@ -195,41 +179,14 @@ const ApprovalEstate: React.FC = () => {
       <Divider sx={{ my: 1 }} />
 
       {/* —— Rent Ads Section —— */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          p: 3,
-          backgroundColor: "background.paper",
-          borderRadius: 1,
-          boxShadow: 1,
-        }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Left side: title and status */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Typography variant="h5" fontWeight={600} color="primary.main">
-              Approved Rent Listings
-            </Typography>
-            <Chip
-              label="Approved by Admin"
-              color="success"
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Box>
-
-          {/* Right side: filter button */}
-          <Box>
+      <LocalizedSectionHeader
+        titleEn="Approved Rent Listings"
+        titleAr="قائمة الإيجارات الموافق عليها"
+        countTextEn="properties after publication"
+        countTextAr="عقار بعد النشر"
+        count={rentAds.length}
+        showFilterButton={
+          <>
             <Button
               variant="outlined"
               startIcon={<FilterAltIcon />}
@@ -246,7 +203,7 @@ const ApprovalEstate: React.FC = () => {
                 },
               }}
             >
-              Filter
+              {lang === "ar" ? "الفلترة" : "Filter"}
             </Button>
             <Menu
               anchorEl={filterAnchorEl}
@@ -261,12 +218,10 @@ const ApprovalEstate: React.FC = () => {
                 Premium
               </MenuItem>
             </Menu>
-          </Box>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {saleAds.length} properties after publication
-        </Typography>
-      </Box>
+          </>
+        }
+      />
+
       <EnhancedPropertyTable
         columns={rentColumns}
         data={filteredRentAds}
@@ -287,34 +242,15 @@ const ApprovalEstate: React.FC = () => {
       <Divider sx={{ my: 1 }} />
 
       {/* —— Require Ads Section —— */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 1,
-          p: 3,
-          backgroundColor: "background.paper",
-          borderRadius: 1,
-          boxShadow: 1,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="h5" fontWeight="600" color="primary.main">
-            Approved Require Listings
-          </Typography>
-          <Chip
-            label="Approved by Admin"
-            color="success"
-            size="small"
-            sx={{ fontWeight: 500 }}
-          />
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          {requireAds.length} requirements after publication
-        </Typography>
-      </Box>
-      <EnhancedPropertyTable<AdRequire>
-        columns={requireColumns}
+      <LocalizedSectionHeader
+        titleEn="Approved Require Listings"
+        titleAr="قائمة الطلبات الموافق عليها"
+        countTextEn="requirements after publication"
+        countTextAr="طلبات بعد النشر"
+        count={requireAds.length}
+      />
+      <EnhancedPropertyTable
+        columns={requireCols}
         data={requireAds}
         count={requireAds.length}
         page={requireCurrentPage - 1}

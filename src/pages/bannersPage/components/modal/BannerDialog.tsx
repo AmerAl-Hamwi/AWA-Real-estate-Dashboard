@@ -6,6 +6,7 @@ import {
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import { BannerPayload } from "@/types/banner";
+import { useLanguage } from "@/contexts/language/LanguageContext";
 
 export interface BannerDialogProps {
   open: boolean;
@@ -18,6 +19,8 @@ export interface BannerDialogProps {
 const BannerDialog: React.FC<BannerDialogProps> = ({
   open, initial, onClose, onSubmit, loading = false
 }) => {
+  const { lang } = useLanguage();
+  const isAr = lang === "ar";
   const isEdit = Boolean(initial?.id);
 
   const [mode,      setMode]      = useState<"text"|"image">(initial?.type || "text");
@@ -61,25 +64,39 @@ const BannerDialog: React.FC<BannerDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{ bgcolor: "primary.main", color: "white" }}>
-        {isEdit ? "Edit Banner" : "Add Banner"}
+        {isEdit
+           ? isAr ? "تعديل البانر" : "Edit Banner"
+           : isAr ? "إضافة بانر جديد" : "Add Banner"}
       </DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Stack spacing={3} mt={2}>
-            <Typography>Banner Type</Typography>
+            <Typography>
+              {isAr ? "نوع البانر" : "Banner Type"}
+            </Typography>
             <RadioGroup row value={mode} onChange={handleModeChange}>
-              <FormControlLabel value="text"  control={<Radio />} label="Text" />
-              <FormControlLabel value="image" control={<Radio />} label="Image"/>
+              <FormControlLabel
+                value="text"
+                control={<Radio />}
+                label={isAr ? "نص" : "Text"}
+              />
+              <FormControlLabel
+                value="image"
+                control={<Radio />}
+                label={isAr ? "صورة" : "Image"}
+              />
             </RadioGroup>
 
             {mode === "text" && (
               <Stack spacing={2}>
                 <TextField
-                  label="Title" fullWidth required
+                  label={isAr ? "العنوان" : "Title"}
+                  fullWidth required
                   value={title} onChange={e => setTitle(e.target.value)}
                 />
                 <TextField
-                  label="Body"  fullWidth required multiline rows={4}
+                  label={isAr ? "المحتوى" : "Body"}
+                  fullWidth required multiline rows={4}
                   value={body}  onChange={e => setBody(e.target.value)}
                 />
               </Stack>
@@ -91,9 +108,11 @@ const BannerDialog: React.FC<BannerDialogProps> = ({
                   variant="contained"
                   component="label"
                   startIcon={<UploadFileIcon />}
-                  sx={{ alignSelf:"flex-start" , color: "white" }}
+                  sx={{ alignSelf:"flex-start", color:"white" }}
                 >
-                  {isEdit && !imageFile ? "Change Image" : "Upload Image"}
+                  {isEdit && !imageFile
+                     ? isAr ? "تغيير الصورة" : "Change Image"
+                     : isAr ? "رفع صورة" : "Upload Image"}
                   <input
                     type="file" hidden accept="image/*"
                     onChange={handleImageChange}
@@ -114,7 +133,8 @@ const BannerDialog: React.FC<BannerDialogProps> = ({
                       sx={{ width:80, height:80 }}
                     />
                     <Typography noWrap>
-                      {imageFile?.name ?? "(existing image)"}
+                      {imageFile?.name
+                        ?? (isAr ? "(الصورة الحالية)" : "(existing image)")}
                     </Typography>
                   </Box>
                 )}
@@ -124,14 +144,26 @@ const BannerDialog: React.FC<BannerDialogProps> = ({
         </DialogContent>
 
         <DialogActions sx={{ px:3, pb:2 }}>
-          <Button onClick={onClose} disabled={loading} sx={{color: "black" ,bgcolor: "grey.300"}}>Cancel</Button>
+          <Button
+            onClick={onClose}
+            disabled={loading}
+            sx={{ color:"black", bgcolor:"grey.300" }}
+          >
+            {isAr ? "إلغاء" : "Cancel"}
+          </Button>
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || (mode==="image" && !imageFile && !isEdit)}
-            sx={{color: "white"}}
+            disabled={
+              loading || (mode==="image" && !imageFile && !isEdit)
+            }
+            sx={{ color:"white" }}
           >
-            {loading ? <CircularProgress size={20} color="inherit" /> : isEdit ? "Save" : "Add"}
+            {loading
+               ? <CircularProgress size={20} color="inherit" />
+               : isEdit
+                 ? (isAr ? "حفظ" : "Save")
+                 : (isAr ? "إضافة" : "Add")}
           </Button>
         </DialogActions>
       </form>

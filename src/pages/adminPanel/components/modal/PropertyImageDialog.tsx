@@ -133,7 +133,7 @@ const PropertyImageDialog: React.FC<PropertyImageDialogProps> = ({
                       filter: idx === activeIndex ? "none" : "brightness(0.8)",
                       transition: "all 0.3s ease",
                       userSelect: "none",
-                      flexShrink: 0, // prevent shrinking on overflow
+                      flexShrink: 0,
                     }}
                   />
                 ))}

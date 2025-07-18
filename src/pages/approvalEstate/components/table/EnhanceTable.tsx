@@ -66,7 +66,10 @@ const EnhancedPropertyTable = <T extends WithId>({
 
   const handleViewClick = (p) => {
     if (Array.isArray(p.images)) {
-      setSelectedImages(p.images);
+      const urls = p.images.map((img) =>
+        typeof img === "string" ? img : img.url
+      );
+      setSelectedImages(urls);
       setActiveIndex(0);
       setDialogOpen(true);
     }
