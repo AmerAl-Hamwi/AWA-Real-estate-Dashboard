@@ -194,6 +194,7 @@ const AdminPannel: React.FC = () => {
           loading={requireLoading}
           error={requireError?.message}
           totalPages={requirePages}
+          showViewButton={false}
         />
       </>
     </Box>

@@ -39,6 +39,7 @@ export interface EnhancedPropertyTableProps<T extends WithId> {
   loading?: boolean;
   error?: string | null;
   totalPages?: number;
+  showViewButton?: boolean;
 }
 
 const EnhancedPropertyTable = <T extends WithId>({
@@ -58,6 +59,7 @@ const EnhancedPropertyTable = <T extends WithId>({
   completedIds,
   loading = false,
   error = null,
+  showViewButton = true,
 }: EnhancedPropertyTableProps<T>) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -65,7 +67,10 @@ const EnhancedPropertyTable = <T extends WithId>({
 
   const handleViewClick = (p) => {
     if (Array.isArray(p.images)) {
-      setSelectedImages(p.images);
+      const urls = p.images.map((img) =>
+        typeof img === "string" ? img : img.url
+      );
+      setSelectedImages(urls);
       setActiveIndex(0);
       setDialogOpen(true);
     }
@@ -307,29 +312,30 @@ const EnhancedPropertyTable = <T extends WithId>({
                     >
                       {isCompleted ? "Rejected" : "Reject"}
                     </Button>
-
-                    <Button
-                      startIcon={<VisibilityIcon />}
-                      size="small"
-                      variant="outlined"
-                      onClick={() => handleViewClick(row)}
-                      sx={{
-                        textTransform: "none",
-                        borderRadius: 2,
-                        px: 1.5,
-                        borderColor: "#1976d2",
-                        color: "#1976d2",
-                        fontWeight: 500,
-                        transition: "all 0.3s ease",
-                        "&:hover": {
-                          backgroundColor: "#1976d2",
-                          color: "#fff",
-                          borderColor: "#115293",
-                        },
-                      }}
-                    >
-                      View
-                    </Button>
+                    {showViewButton && (
+                      <Button
+                        startIcon={<VisibilityIcon />}
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleViewClick(row)}
+                        sx={{
+                          textTransform: "none",
+                          borderRadius: 2,
+                          px: 1.5,
+                          borderColor: "#1976d2",
+                          color: "#1976d2",
+                          fontWeight: 500,
+                          transition: "all 0.3s ease",
+                          "&:hover": {
+                            backgroundColor: "#1976d2",
+                            color: "#fff",
+                            borderColor: "#115293",
+                          },
+                        }}
+                      >
+                        View
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               );

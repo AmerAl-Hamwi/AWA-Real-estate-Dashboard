@@ -4,7 +4,6 @@ import Navbar from "@components/common/navigations/navbar/navbar";
 import SideBar from "@components/common/navigations/sidebar/sidebar";
 
 const MainLayout: React.FC = () => {
-  const [activeTab] = useState("Overview");
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const { pathname } = useLocation();
@@ -14,7 +13,7 @@ const MainLayout: React.FC = () => {
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-800">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-50">
       {/* Sidebar */}
       <aside
         className={`${isCollapsed ? "w-0 lg:w-[73px]" : "w-[260px]"} transition-all duration-300`}
@@ -29,7 +28,6 @@ const MainLayout: React.FC = () => {
         {/* Navbar */}
         <header className="w-full px:0 lg:px-4">
           <Navbar
-            activeTab={activeTab}
             isCollapsed={isCollapsed}
             setIsCollapsed={setIsCollapsed}
           />
