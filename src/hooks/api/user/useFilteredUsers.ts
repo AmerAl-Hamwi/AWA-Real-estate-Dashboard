@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
-import { getUnsubscribedUsers } from "@services/user/userService";
+import { getFilteredUsers } from "@services/user/userService";
 import { User } from "@/types/user";
 
-export const useUnsubscribedUsers = () => {
+export const useFilteredUsers = (hasSubscription?: boolean) => {
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        const u = await getUnsubscribedUsers();
+        const u = await getFilteredUsers(hasSubscription);
         setUsers(u);
       } catch (err) {
         setError(err as Error);
@@ -19,7 +19,7 @@ export const useUnsubscribedUsers = () => {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [hasSubscription]);
 
-  return { users, loading, error };
+  return { users, loading, error, setUsers };
 };

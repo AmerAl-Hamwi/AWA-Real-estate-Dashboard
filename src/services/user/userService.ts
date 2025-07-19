@@ -12,13 +12,29 @@ api.interceptors.request.use((cfg) => {
   return cfg;
 });
 
-export const getUnsubscribedUsers = async (): Promise<User[]> => {
+export const getFilteredUsers = async (
+  hasSubscription?: boolean
+): Promise<User[]> => {
   const { data } = await api.get<{
     status: boolean;
     message: string;
     data: { users: User[] };
   }>("/users/get-filtered-users", {
-    params: { hasSubscription: false },
+    params: hasSubscription === undefined ? {} : { hasSubscription },
   });
+
   return data.data.users;
+};
+
+
+export const registerManualUser = async (payload: {
+  name: string;
+  email: string;
+  number: string;
+  provinceId: string;
+  cityId: string;
+  userType: string;
+  subscriptionAmount: string;
+}): Promise<void> => {
+  await api.post("/users/manual-register-user", payload);
 };

@@ -9,15 +9,21 @@ import {
   useMediaQuery,
   CircularProgress,
   Alert,
+  Button,
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import AddIcon from "@mui/icons-material/Add";
 import EnhancedUserTable from "./components/table/enhancedExternalUserTable";
+import ManualUserDialog, {
+  ManualUserPayload,
+} from "./components/dialog/ManualUserDialog";
 import { Column, Order } from "@components/ui/table/TableLayouts";
 import { User } from "@/types/user";
-import { useUnsubscribedUsers } from "@/hooks/api/user/useUnsubscribedUsers";
+import { useFilteredUsers } from "@/hooks/api/user/useFilteredUsers";
 import { useLanguage } from "@/contexts/language/LanguageContext";
+import { useManualUserRegister } from "@hooks/api/user/useManualUserRegister";
 
 type SubFilter = "all" | "subscribed" | "free";
 
@@ -27,28 +33,19 @@ const UserAdministrationPage: React.FC = () => {
   const { lang } = useLanguage();
   const isAr = lang === "ar";
 
-  // translate your column headers here if needed:
-  const columns: Column<User>[] = useMemo(
-    () => [
-      { field: "name", label: isAr ? "الاسم" : "Name", minWidth: 180 },
-      { field: "email", label: isAr ? "البريد الإلكتروني" : "Email", minWidth: 200 },
-      { field: "number", label: isAr ? "الهاتف" : "Phone", minWidth: 140 },
-      { field: "userType", label: isAr ? "النوع" : "Type", minWidth: 120 },
-      { field: "hasSubscription", label: isAr ? "الاشتراك" : "Subscription", minWidth: 130 },
-      { field: "province", label: isAr ? "المحافظة" : "Province", minWidth: 140 },
-      { field: "city", label: isAr ? "المدينة" : "City", minWidth: 140 },
-      { field: "createdAt", label: isAr ? "تاريخ التسجيل" : "Registered On", minWidth: 140 },
-      { field: "updatedAt", label: isAr ? "آخر تحديث" : "Last Updated", minWidth: 140 },
-    ],
-    [isAr]
-  );
-
-  const { users, loading, error } = useUnsubscribedUsers();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [subFilter, setSubFilter] = useState<SubFilter>("all");
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof User>("name");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [subFilter, setSubFilter] = useState<SubFilter>("all");
+
+  const hasSubscription =
+    subFilter === "all" ? undefined : subFilter === "subscribed";
+
+  const { users, loading, error } = useFilteredUsers(hasSubscription);
+  const { register } = useManualUserRegister();
 
   const handleRequestSort = (field: keyof User) => {
     const isAsc = orderBy === field && order === "asc";
@@ -56,12 +53,53 @@ const UserAdministrationPage: React.FC = () => {
     setOrderBy(field);
   };
 
-  const filtered = users.filter((u) => {
-    if (subFilter === "all") return true;
-    return subFilter === "subscribed"
-      ? u.hasSubscription
-      : !u.hasSubscription;
-  });
+  const columns: Column<User>[] = useMemo(
+    () => [
+      { field: "name", label: isAr ? "الاسم" : "Name", minWidth: 180 },
+      {
+        field: "email",
+        label: isAr ? "البريد الإلكتروني" : "Email",
+        minWidth: 200,
+      },
+      { field: "number", label: isAr ? "الهاتف" : "Phone", minWidth: 140 },
+      { field: "userType", label: isAr ? "النوع" : "Type", minWidth: 120 },
+      {
+        field: "hasSubscription",
+        label: isAr ? "الاشتراك" : "Subscription",
+        minWidth: 130,
+      },
+      {
+        field: "province",
+        label: isAr ? "المحافظة" : "Province",
+        minWidth: 140,
+      },
+      { field: "city", label: isAr ? "المدينة" : "City", minWidth: 140 },
+      {
+        field: "createdAt",
+        label: isAr ? "تاريخ التسجيل" : "Registered On",
+        minWidth: 140,
+      },
+      {
+        field: "updatedAt",
+        label: isAr ? "آخر تحديث" : "Last Updated",
+        minWidth: 140,
+      },
+    ],
+    [isAr]
+  );
+
+  const handleManualSubmit = async (data: ManualUserPayload) => {
+    try {
+      setFormError(null);
+      await register(data);
+      setDialogOpen(false);
+    } catch (err) {
+      console.error("Registration failed:", err);
+      setFormError(
+        err?.response?.data?.message || "Registration failed. Please try again."
+      );
+    }
+  };
 
   if (loading) return <CircularProgress />;
   if (error) return <Alert severity="error">{error.message}</Alert>;
@@ -80,53 +118,62 @@ const UserAdministrationPage: React.FC = () => {
           gap: 2,
         }}
       >
-        {/* Page Title */}
         <Typography variant="h6">
           {isAr ? "المستخدمون" : "Users"}{" "}
           <Typography component="span" color="primary">
-            ({filtered.length})
+            ({users.length})
           </Typography>
         </Typography>
 
-        {/* Filter buttons */}
-        <ToggleButtonGroup
-          value={subFilter}
-          exclusive
-          onChange={(_, v) => v && setSubFilter(v)}
-          sx={{
-            "& .MuiToggleButton-root": {
-              textTransform: "none",
-              px: 2,
-              borderRadius: 1,
-            },
-            "& .MuiToggleButton-root.Mui-selected": {
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText,
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
+        <Box display="flex" alignItems="center" gap={1}>
+          <ToggleButtonGroup
+            value={subFilter}
+            exclusive
+            onChange={(_, v) => v && setSubFilter(v)}
+            sx={{
+              "& .MuiToggleButton-root": {
+                textTransform: "none",
+                px: 2,
+                borderRadius: 1,
               },
-            },
-          }}
-        >
-          <ToggleButton value="all">
-            <PersonIcon sx={{ mr: 1 }} />
-            {isAr ? "الكل" : "All"}
-          </ToggleButton>
-          <ToggleButton value="subscribed">
-            <CheckCircleIcon sx={{ mr: 1 }} />
-            {isAr ? "مشترك" : "Subscribed"}
-          </ToggleButton>
-          <ToggleButton value="free">
-            <CancelIcon sx={{ mr: 1 }} />
-            {isAr ? "مجاني" : "Free"}
-          </ToggleButton>
-        </ToggleButtonGroup>
+              "& .MuiToggleButton-root.Mui-selected": {
+                backgroundColor: theme.palette.primary.main,
+                color: theme.palette.primary.contrastText,
+                "&:hover": {
+                  backgroundColor: theme.palette.primary.dark,
+                },
+              },
+            }}
+          >
+            <ToggleButton value="all">
+              <PersonIcon sx={{ mr: 1 }} />
+              {isAr ? "الكل" : "All"}
+            </ToggleButton>
+            <ToggleButton value="subscribed">
+              <CheckCircleIcon sx={{ mr: 1 }} />
+              {isAr ? "مشترك" : "Subscribed"}
+            </ToggleButton>
+            <ToggleButton value="free">
+              <CancelIcon sx={{ mr: 1 }} />
+              {isAr ? "مجاني" : "Free"}
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setDialogOpen(true)}
+            sx={{ color: "white", py: 1.4 }}
+          >
+            {isAr ? "إضافة يدويًا" : "Add User"}
+          </Button>
+        </Box>
       </Paper>
 
       <EnhancedUserTable
         columns={columns}
-        data={filtered}
-        count={filtered.length}
+        data={users}
+        count={users.length}
         page={page}
         rowsPerPage={rowsPerPage}
         order={order}
@@ -137,6 +184,16 @@ const UserAdministrationPage: React.FC = () => {
           setRowsPerPage(+e.target.value);
           setPage(0);
         }}
+      />
+
+      <ManualUserDialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          setFormError(null);
+        }}
+        onSubmit={handleManualSubmit}
+        error={formError}
       />
     </Box>
   );
