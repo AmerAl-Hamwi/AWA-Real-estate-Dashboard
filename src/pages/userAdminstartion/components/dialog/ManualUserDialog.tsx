@@ -9,7 +9,6 @@ import {
   MenuItem,
   Stack,
   CircularProgress,
-  Box
 } from "@mui/material";
 import { useProvinces } from "@hooks/api/user/useProvinces";
 
@@ -32,7 +31,7 @@ interface Props {
 
 const userTypes = ["owner", "real estate company"];
 
-const ManualUserDialog: React.FC<Props> = ({ open, onClose, onSubmit, error }) => {
+const ManualUserDialog: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   const [form, setForm] = useState<ManualUserPayload>({
     name: "",
     email: "",
@@ -69,7 +68,6 @@ const ManualUserDialog: React.FC<Props> = ({ open, onClose, onSubmit, error }) =
           <CircularProgress />
         ) : (
           <>
-            {error && <Box sx={{ color: "error.main", mb: 1 }}>{error}</Box>}
             <Stack spacing={2} mt={1}>
               <TextField
                 label="Name"

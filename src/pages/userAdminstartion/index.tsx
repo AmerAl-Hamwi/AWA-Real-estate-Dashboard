@@ -100,7 +100,6 @@ const UserAdministrationPage: React.FC = () => {
       await refetch();
       setDialogOpen(false);
     } catch (err) {
-      console.error("Registration failed:", err);
       setFormError(
         err?.response?.data?.message || "Registration failed. Please try again."
       );

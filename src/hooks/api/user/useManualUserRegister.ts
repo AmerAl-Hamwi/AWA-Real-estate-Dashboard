@@ -31,10 +31,11 @@ export const useManualUserRegister = () => {
       showToaster({ message: "User Added Successfully", type: "success" });
     } catch (err) {
       showToaster({
-        message: err.response?.error?.data || "Registeration failed",
+        message: err.response?.data?.error || "Registration failed",
         type: "error",
       });
-      setError(err as Error);
+      setError(err);
+      throw err; // ✅ This makes sure the error is caught in the calling component
     } finally {
       setLoading(false);
     }

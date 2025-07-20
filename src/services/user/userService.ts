@@ -31,9 +31,6 @@ export const getFilteredUsers = async (
   };
 };
 
-
-
-
 export const registerManualUser = async (payload: {
   name: string;
   email: string;
