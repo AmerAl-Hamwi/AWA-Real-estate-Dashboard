@@ -44,11 +44,12 @@ const UserAdministrationPage: React.FC = () => {
   const hasSubscription =
     subFilter === "all" ? undefined : subFilter === "subscribed";
 
-  const { users, total, loading, error } = useFilteredUsers(
+  const { users, total, loading, error, refetch } = useFilteredUsers(
     page,
     rowsPerPage,
     hasSubscription
   );
+
   const { register } = useManualUserRegister();
 
   const handleRequestSort = (field: keyof User) => {
@@ -96,6 +97,7 @@ const UserAdministrationPage: React.FC = () => {
     try {
       setFormError(null);
       await register(data);
+      await refetch();
       setDialogOpen(false);
     } catch (err) {
       console.error("Registration failed:", err);
