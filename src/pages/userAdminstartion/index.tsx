@@ -7,7 +7,6 @@ import {
   ToggleButtonGroup,
   useTheme,
   useMediaQuery,
-  CircularProgress,
   Alert,
   Button,
 } from "@mui/material";
@@ -19,6 +18,7 @@ import EnhancedUserTable from "./components/table/enhancedExternalUserTable";
 import ManualUserDialog, {
   ManualUserPayload,
 } from "./components/dialog/ManualUserDialog";
+import LoadingScreen from "@components/ui/loader/loadingScreen";
 import { Column, Order } from "@components/ui/table/TableLayouts";
 import { User } from "@/types/user";
 import { useFilteredUsers } from "@/hooks/api/user/useFilteredUsers";
@@ -106,7 +106,7 @@ const UserAdministrationPage: React.FC = () => {
     }
   };
 
-  if (loading) return <CircularProgress />;
+    if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error.message}</Alert>;
 
   return (
