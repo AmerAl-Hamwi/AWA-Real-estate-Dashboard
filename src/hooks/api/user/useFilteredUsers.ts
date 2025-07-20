@@ -2,8 +2,13 @@ import { useState, useEffect } from "react";
 import { getFilteredUsers } from "@services/user/userService";
 import { User } from "@/types/user";
 
-export const useFilteredUsers = (hasSubscription?: boolean) => {
+export const useFilteredUsers = (
+  page: number,
+  limit: number,
+  hasSubscription?: boolean
+) => {
   const [users, setUsers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -11,15 +16,17 @@ export const useFilteredUsers = (hasSubscription?: boolean) => {
     (async () => {
       setLoading(true);
       try {
-        const u = await getFilteredUsers(hasSubscription);
-        setUsers(u);
+        const { users, total } = await getFilteredUsers(page + 1, limit, hasSubscription);
+        setUsers(users);
+        setTotal(total);
       } catch (err) {
         setError(err as Error);
       } finally {
         setLoading(false);
       }
     })();
-  }, [hasSubscription]);
+  }, [page, limit, hasSubscription]);
 
-  return { users, loading, error, setUsers };
+  return { users, total, loading, error, setUsers };
 };
+

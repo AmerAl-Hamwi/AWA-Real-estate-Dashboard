@@ -44,7 +44,11 @@ const UserAdministrationPage: React.FC = () => {
   const hasSubscription =
     subFilter === "all" ? undefined : subFilter === "subscribed";
 
-  const { users, loading, error } = useFilteredUsers(hasSubscription);
+  const { users, total, loading, error } = useFilteredUsers(
+    page,
+    rowsPerPage,
+    hasSubscription
+  );
   const { register } = useManualUserRegister();
 
   const handleRequestSort = (field: keyof User) => {
@@ -173,7 +177,7 @@ const UserAdministrationPage: React.FC = () => {
       <EnhancedUserTable
         columns={columns}
         data={users}
-        count={users.length}
+        count={total}
         page={page}
         rowsPerPage={rowsPerPage}
         order={order}

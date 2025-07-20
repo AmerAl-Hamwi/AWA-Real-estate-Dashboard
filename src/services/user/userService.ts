@@ -13,18 +13,25 @@ api.interceptors.request.use((cfg) => {
 });
 
 export const getFilteredUsers = async (
+  page: number,
+  limit: number,
   hasSubscription?: boolean
-): Promise<User[]> => {
-  const { data } = await api.get<{
-    status: boolean;
-    message: string;
-    data: { users: User[] };
-  }>("/users/get-filtered-users", {
-    params: hasSubscription === undefined ? {} : { hasSubscription },
+): Promise<{ users: User[]; total: number }> => {
+  const { data } = await api.get("/users/get-filtered-users", {
+    params: {
+      page,
+      limit,
+      ...(hasSubscription !== undefined && { hasSubscription }),
+    },
   });
 
-  return data.data.users;
+  return {
+    users: data.data.users,
+    total: data.data.pagination.totalUsers,
+  };
 };
+
+
 
 
 export const registerManualUser = async (payload: {

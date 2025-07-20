@@ -37,9 +37,7 @@ const EnhancedUserTable: React.FC<EnhancedUserTableProps> = ({
   onPageChange,
   onRowsPerPageChange,
 }) => {
-  const start = page * rowsPerPage;
-  const end = start + rowsPerPage;
-  const pageData = data.slice(start, end);
+  const pageData = data;
 
   return (
     <TableLayout<User>
@@ -65,9 +63,7 @@ const EnhancedUserTable: React.FC<EnhancedUserTableProps> = ({
                 color="text.secondary"
               >
                 <InboxIcon sx={{ fontSize: 48, mb: 1 }} />
-                <Typography variant="subtitle1">
-                  No users found.
-                </Typography>
+                <Typography variant="subtitle1">No users found.</Typography>
               </Box>
             </TableCell>
           </TableRow>
@@ -108,12 +104,8 @@ const EnhancedUserTable: React.FC<EnhancedUserTableProps> = ({
                   return (
                     <TableCell key="hasSubscription" sx={{ p: 1 }}>
                       <Chip
-                        label={
-                          user.hasSubscription ? "Subscribed" : "Free"
-                        }
-                        color={
-                          user.hasSubscription ? "success" : "default"
-                        }
+                        label={user.hasSubscription ? "Subscribed" : "Free"}
+                        color={user.hasSubscription ? "success" : "default"}
                         size="small"
                       />
                     </TableCell>
