@@ -1,5 +1,3 @@
-// src/types/user.ts
-
 export interface Province {
   id: string;
   name: string;
@@ -26,4 +24,5 @@ export interface User {
   city: City;         
   createdAt: string;
   updatedAt: string;
+  action
 }

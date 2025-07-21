@@ -1,41 +1,43 @@
 import { useState } from "react";
 import { registerManualUser } from "@services/user/userService";
-import { useToasterContext } from "@contexts/toaster/useToasterContext";
+import { useToasterContext } from "@/contexts/toaster/useToasterContext";
+
+export interface ManualUserPayload {
+  name: string;
+  email: string;
+  number: string;
+  province: string;
+  city: string;
+  userType: string;
+  subscriptionAmount: string;
+  image?: File;
+}
 
 export const useManualUserRegister = () => {
   const { showToaster } = useToasterContext();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string|null>(null);
 
-  const register = async (form: {
-    name: string;
-    email: string;
-    number: string;
-    province: string;
-    city: string;
-    userType: string;
-    subscriptionAmount: string;
-  }) => {
+  const register = async (data: ManualUserPayload) => {
     setLoading(true);
     setError(null);
     try {
       await registerManualUser({
-        name: form.name,
-        email: form.email,
-        number: form.number,
-        provinceId: form.province,
-        cityId: form.city,
-        userType: form.userType,
-        subscriptionAmount: form.subscriptionAmount,
+        name: data.name,
+        email: data.email,
+        number: data.number,
+        provinceId: data.province,
+        cityId: data.city,
+        userType: data.userType,
+        subscriptionAmount: data.subscriptionAmount,
+        image: data.image,
       });
-      showToaster({ message: "User Added Successfully", type: "success" });
+      showToaster({ message: "User added successfully", type: "success" });
     } catch (err) {
-      showToaster({
-        message: err.response?.data?.error || "Registration failed",
-        type: "error",
-      });
-      setError(err);
-      throw err; // ✅ This makes sure the error is caught in the calling component
+      const msg = err.response?.data?.message || "Registration failed";
+      showToaster({ message: msg, type: "error" });
+      setError(msg);
+      throw err;
     } finally {
       setLoading(false);
     }
