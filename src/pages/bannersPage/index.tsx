@@ -15,6 +15,7 @@ const BannerPage: React.FC = () => {
   const { lang } = useLanguage();
   const isAr = lang === "ar";
 
+  const bannersState = useBanners();
   const {
     data: banners,
     total,
@@ -25,10 +26,38 @@ const BannerPage: React.FC = () => {
     loading,
     error,
     refetch,
-  } = useBanners();
-  const { createBanner, error: createError } = useCreateBanner();
-  const { updateBanner, isLoading: updating } = useUpdateBanner();
-  const { deleteBanner, loading: deleting } = useDeleteBanner(() => refetch());
+    addOptimistic,
+    updateOptimistic,
+    deleteOptimistic,
+    snapshot,
+    setSnapshot,
+  } = bannersState;
+
+  const { createBanner, isLoading: adding } = useCreateBanner({
+    addOptimistic,
+    snapshot,
+    setSnapshot,
+    refetch,
+  });
+
+  const { updateBanner, isLoading: updating } = useUpdateBanner({
+    updateOptimistic,
+    snapshot,
+    setSnapshot,
+    refetch,
+  });
+
+  const { deleteBanner, loading: deleting } = useDeleteBanner(
+    async (id: string) => {
+      const snap = snapshot;
+      deleteOptimistic(id);
+      try {
+        await refetch();
+      } catch {
+        setSnapshot(snap.data, snap.total);
+      }
+    }
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [initial, setInitial] = useState<BannerPayload | undefined>(undefined);
@@ -37,6 +66,7 @@ const BannerPage: React.FC = () => {
     setInitial(undefined);
     setDialogOpen(true);
   };
+
   const handleEditClick = (id: string) => {
     const b = banners.find((x) => x.id === id);
     if (!b) return;
@@ -50,24 +80,19 @@ const BannerPage: React.FC = () => {
   };
 
   const handleDialogSubmit = async (payload: BannerPayload) => {
-    try {
-      if (payload.id) {
-        await updateBanner(payload.id, payload);
-      } else {
-        await createBanner(payload);
-      }
-      await refetch();
-      setDialogOpen(false);
-    } catch {
-      /* toasters show errors */
+    if (payload.id) {
+      await updateBanner(payload.id, payload);
+    } else {
+      await createBanner(payload);
     }
+    setDialogOpen(false);
   };
 
   if (loading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Box sx={{ p: 4, position: "relative" }}>
+    <Box sx={{ p: 4 }}>
       <Box display="flex" justifyContent="space-between" mb={2}>
         <Typography variant="h4">
           {isAr ? "إدارة البانرات" : "Banner Management"}
@@ -82,8 +107,6 @@ const BannerPage: React.FC = () => {
         </Button>
       </Box>
 
-      {createError && <Alert severity="error">{createError}</Alert>}
-
       <EnhancedBannerTable<FormattedBanner>
         columns={[
           {
@@ -91,21 +114,9 @@ const BannerPage: React.FC = () => {
             label: isAr ? "الصورة" : "Image",
             minWidth: 150,
           },
-          {
-            field: "title",
-            label: isAr ? "العنوان" : "Title",
-            minWidth: 120,
-          },
-          {
-            field: "body",
-            label: isAr ? "المحتوى" : "Body",
-            minWidth: 200,
-          },
-          {
-            field: "type",
-            label: isAr ? "النوع" : "Type",
-            minWidth: 100,
-          },
+          { field: "title", label: isAr ? "العنوان" : "Title", minWidth: 120 },
+          { field: "body", label: isAr ? "المحتوى" : "Body", minWidth: 200 },
+          { field: "type", label: isAr ? "النوع" : "Type", minWidth: 100 },
         ]}
         data={banners}
         count={total}
@@ -127,7 +138,7 @@ const BannerPage: React.FC = () => {
         initial={initial}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleDialogSubmit}
-        loading={updating}
+        loading={adding || updating}
       />
     </Box>
   );

@@ -25,9 +25,28 @@ export function useBanners(initialPage = 1, initialLimit = 10) {
     }
   }, [page, limit]);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
+
+  // ---------- optimistic helpers ----------
+  const addOptimistic = (banner: FormattedBanner) => {
+    setData(prev => [banner, ...prev]);
+    setTotal(t => t + 1);
+  };
+
+  const updateOptimistic = (id: string, patch: Partial<FormattedBanner>) => {
+    setData(prev => prev.map(b => (b.id === id ? { ...b, ...patch } : b)));
+  };
+
+  const deleteOptimistic = (id: string) => {
+    setData(prev => prev.filter(b => b.id !== id));
+    setTotal(t => Math.max(0, t - 1));
+  };
+
+  // rollback helper if API failed
+  const setSnapshot = (snap: FormattedBanner[], totalSnap: number) => {
+    setData(snap);
+    setTotal(totalSnap);
+  };
 
   return {
     data,
@@ -39,5 +58,10 @@ export function useBanners(initialPage = 1, initialLimit = 10) {
     loading,
     error,
     refetch: load,
+    addOptimistic,
+    updateOptimistic,
+    deleteOptimistic,
+    snapshot: { data, total },
+    setSnapshot,
   };
 }

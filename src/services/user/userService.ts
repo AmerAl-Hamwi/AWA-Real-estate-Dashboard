@@ -89,6 +89,12 @@ export const registerManualUser = async (payload: {
   }
 };
 
+export const deleteUserById = async (userId: string): Promise<void> => {
+  await api.delete(`/users/delete-user`, {
+    params: { userId },
+  });
+};
+
 /**
  * Grant a subscription to a user.
  */

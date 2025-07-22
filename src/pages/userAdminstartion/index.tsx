@@ -16,6 +16,7 @@ import { useFilteredUsers } from "@/hooks/api/user/useFilteredUsers";
 import { useLanguage } from "@/contexts/language/LanguageContext";
 import { useManualUserRegister } from "@hooks/api/user/useManualUserRegister";
 import { useSubscriptionActions } from "@/hooks/api/user/useSubscriptionActions";
+import { useDeleteUser } from "@/hooks/api/user/useDeleteUser";
 
 type SubFilter = "all" | "subscribed" | "free";
 
@@ -38,6 +39,7 @@ const UserAdministrationPage: React.FC = () => {
   const hasSubscription = subFilter === "all" ? undefined : subFilter === "subscribed";
   const { users, total, loading, error, refetch } = useFilteredUsers(page, rowsPerPage, hasSubscription);
   const { onSubscribe, onCancel, loadingId } = useSubscriptionActions();
+    const { deleteUser: deleteUserReq, loadingId: deletingId } = useDeleteUser(refetch);
 
   // columns
   const columns: Column<User>[] = useMemo(() => [
@@ -126,7 +128,8 @@ const UserAdministrationPage: React.FC = () => {
         onRowsPerPageChange={e => { setRowsPerPage(+e.target.value); setPage(0); }}
         onSubscribe={async id => { await onSubscribe(id); await refetch(); }}
         onCancel={async id   => { await onCancel(id);   await refetch(); }}
-        loadingId={loadingId}
+        loadingId={loadingId || deletingId}
+        onDelete={deleteUserReq}
       />
 
        <ManualUserDialog

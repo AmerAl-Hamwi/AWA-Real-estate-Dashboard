@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { deleteBanner } from "@services/bannerApiService/bannerApiService";
+import { deleteBanner as apiDeleteBanner } from "@services/bannerApiService/bannerApiService";
 import { useToasterContext } from "@contexts/toaster/useToasterContext";
 
-export function useDeleteBanner(onSuccess: () => void) {
+export function useDeleteBanner(onSuccess?: (id: string) => void) {
   const { showToaster } = useToasterContext();
   const [loading, setLoading] = useState(false);
 
@@ -10,14 +10,15 @@ export function useDeleteBanner(onSuccess: () => void) {
     async (id: string) => {
       setLoading(true);
       try {
-        await deleteBanner(id);
-        showToaster({ message: "Banner deleted Successfully", type: "success" });
-        onSuccess();
+        await apiDeleteBanner(id);
+        showToaster({ message: "Banner deleted successfully", type: "success" });
+        onSuccess?.(id);
       } catch (err) {
         showToaster({
           message: err.response?.data?.message || "Delete failed",
           type: "error",
         });
+        throw err;
       } finally {
         setLoading(false);
       }

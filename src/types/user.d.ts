@@ -18,11 +18,18 @@ export interface User {
   logo?: string;
   hasSubscription: boolean;
   subscription: {
+    id: string;
+    isSubscribed: boolean;
+    status: SubscriptionStatus;
+    subscriptionType: SubscriptionType;
+    amount: number;
+    expireAt: string;
     createdAt: string;
+    updatedAt: string;
   } | null;
   province: Province;
-  city: City;         
+  city: City;
   createdAt: string;
   updatedAt: string;
-  action
+  action;
 }
