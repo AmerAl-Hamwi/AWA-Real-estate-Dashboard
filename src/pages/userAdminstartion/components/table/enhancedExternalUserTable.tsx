@@ -194,7 +194,7 @@ const EnhancedUserTable: React.FC<EnhancedUserTableProps> = ({
                                 onClick={() => onSubscribe(user.id)}
                                 title="Renew Subscription"
                               >
-                                <AutorenewIcon fontSize="small" />
+                                <AutorenewIcon fontSize="small" style={{color: "gray"}} />
                               </IconButton>
                             )}
 
