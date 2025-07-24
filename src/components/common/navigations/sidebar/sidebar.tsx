@@ -9,6 +9,7 @@ import { menuItems, MenuItemDef } from "./variable/menuItems";
 import { useToasterContext } from "@contexts/toaster/useToasterContext";
 import { useAuthService } from "@hooks/api/auth/useAuthService";
 import { useLanguage } from "@/contexts/language/LanguageContext";
+import AwaLogo from "@assets/images/awa simple green logo.png";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -109,42 +110,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            m: 2,
+            m: 1,
           }}
         >
-          {isCollapsed ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
             <Box
-              component="span"
+              component="img"
+              src={AwaLogo}
+              alt="AWA Logo"
               sx={{
-                opacity: 1,
-                transition: "opacity 0.3s",
-                fontSize: { xs: "25px", lg: "40px" },
-                fontFamily: "adamina",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textAlign: "center",
-                color: "black",
+                width: isCollapsed ? 40 : 80,
+                height: isCollapsed ? 40 : 80,
+                transition: "width 0.3s",
               }}
-            >
-              A
-            </Box>
-          ) : (
-            <Box
-              component="span"
-              sx={{
-                opacity: 1,
-                transition: "opacity 0.3s",
-                fontSize: { xs: "45px", lg: "45px" },
-                fontFamily: "adamina",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textAlign: "center",
-                color: "black",
-              }}
-            >
-              AWA
-            </Box>
-          )}
+            />
+          </Box>
         </Box>
 
         <hr className="mb-8 h-px border-t-0 bg-transparent bg-gradient-to-r from-transparent via-neutral-500 to-transparent opacity-25 dark:via-neutral-400" />
