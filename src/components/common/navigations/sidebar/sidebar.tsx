@@ -125,8 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, setIsCollapsed }) => {
               src={AwaLogo}
               alt="AWA Logo"
               sx={{
-                width: isCollapsed ? 40 : 80,
-                height: isCollapsed ? 40 : 80,
+                width: isCollapsed ? 60 : 80,
+                height: isCollapsed ? 80 : 80,
                 transition: "width 0.3s",
               }}
             />
