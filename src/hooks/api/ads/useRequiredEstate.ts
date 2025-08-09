@@ -4,6 +4,7 @@ import { AdRequire } from "@/types/property";
 
 interface UseRequiredEstateResult {
   ads: AdRequire[];
+  totalDocs: number;
   pages: number;
   currentPage: number;
   limit: number;
@@ -18,6 +19,7 @@ export const useRequiredEstate = (
   initialLimit: number
 ): UseRequiredEstateResult => {
   const [ads, setAds] = useState<AdRequire[]>([]);
+  const [totalDocs, setTotalDocs] = useState(0);
   const [pages, setPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [limit, setLimit] = useState(initialLimit);
@@ -29,20 +31,18 @@ export const useRequiredEstate = (
     setError(null);
 
     getRequiredEstate(currentPage, limit)
-      .then(({ ads, totalPages }) => {
+      .then(({ ads, totalPages, totalDocs }) => {
         setAds(ads);
         setPages(totalPages);
+        setTotalDocs(totalDocs);
       })
-      .catch((err) => {
-        setError(err as Error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      .catch((err) => setError(err as Error))
+      .finally(() => setLoading(false));
   }, [currentPage, limit]);
 
   return {
     ads,
+    totalDocs,
     pages,
     currentPage,
     limit,

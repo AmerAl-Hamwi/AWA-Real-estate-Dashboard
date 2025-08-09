@@ -48,6 +48,7 @@ const ApprovalEstate: React.FC = () => {
     error,
     setPage,
     setLimit,
+    totalAds,
   } = useAds(1, 5);
 
   const {
@@ -57,6 +58,7 @@ const ApprovalEstate: React.FC = () => {
     limit: requireLimit,
     loading: requireLoading,
     error: requireError,
+    totalDocs: requireTotalDocs,
   } = useRequiredEstate(1, 5);
 
   const [order, setOrder] = useState<Order>("asc");
@@ -162,7 +164,7 @@ const ApprovalEstate: React.FC = () => {
       <EnhancedPropertyTable
         columns={saleColumns}
         data={filteredSaleAds}
-        count={saleAds.length}
+        count={totalAds}
         page={currentPage - 1}
         rowsPerPage={limit}
         order={order}
@@ -225,7 +227,7 @@ const ApprovalEstate: React.FC = () => {
       <EnhancedPropertyTable
         columns={rentColumns}
         data={filteredRentAds}
-        count={rentAds.length}
+        count={totalAds}
         page={currentPage - 1}
         rowsPerPage={limit}
         order={order}
@@ -252,7 +254,7 @@ const ApprovalEstate: React.FC = () => {
       <EnhancedPropertyTable
         columns={requireCols}
         data={requireAds}
-        count={requireAds.length}
+        count={requireTotalDocs}
         page={requireCurrentPage - 1}
         rowsPerPage={requireLimit}
         order={order}
