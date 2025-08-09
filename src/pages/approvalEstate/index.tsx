@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-// import { useNavigate } from "react-router-dom";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useMemo, useState } from "react";
 import {
   Box,
   Divider,
@@ -7,10 +7,8 @@ import {
   Button,
   Menu,
   MenuItem,
-  // Fab,
 } from "@mui/material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-// import AddIcon from "@mui/icons-material/Add";
 import LoadingScreen from "@components/ui/loader/loadingScreen";
 import { Order } from "@components/ui/table/TableLayouts";
 import EnhancedPropertyTable from "./components/table/EnhanceTable";
@@ -26,90 +24,132 @@ import LocalizedSectionHeader from "./components/common/LocalizedSectionHeader";
 import { useLanguage } from "@/contexts/language/LanguageContext";
 import { useLocalizedColumns } from "@/utils/localizeColumns";
 
+type AdTypeFilter = "All" | "Regular" | "Premium";
+
+// small helpers
+const slice = <T,>(arr: T[], page: number, rows: number) =>
+  arr.slice(page * rows, page * rows + rows);
+
+function sortStable<T, K extends keyof T>(
+  arr: T[],
+  key: K,
+  dir: Order
+): T[] {
+  const cmp = (a: T, b: T) => {
+    const va = a[key] as any;
+    const vb = b[key] as any;
+    const base =
+      typeof va === "number" && typeof vb === "number"
+        ? va - vb
+        : String(va ?? "").localeCompare(String(vb ?? ""));
+    return dir === "asc" ? base : -base;
+  };
+  // stable copy sort
+  return [...arr].sort(cmp);
+}
+
 const ApprovalEstate: React.FC = () => {
   const { lang } = useLanguage();
   const saleColumns = useLocalizedColumns(saleDefs);
   const rentColumns = useLocalizedColumns(rentDefs);
   const requireCols = useLocalizedColumns(requireDefs);
-  // const navigate = useNavigate();
-  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(
-    null
-  );
-  const [adTypeFilter, setAdTypeFilter] = useState<
-    "All" | "Regular" | "Premium"
-  >("All");
+
+  // Ask the server for a *large* page one time to allow local pagination.
+  // (No changes to hooks/interfaces.)
   const {
     ads,
     refetch,
-    pages,
-    currentPage,
-    limit,
     loading,
     error,
-    setPage,
-    setLimit,
-    totalAds,
-  } = useAds(1, 5);
+  } = useAds(1, 1000);
 
   const {
     ads: requireAdsRaw,
-    pages: requirePages,
-    currentPage: requireCurrentPage,
-    limit: requireLimit,
     loading: requireLoading,
     error: requireError,
-    totalDocs: requireTotalDocs,
-  } = useRequiredEstate(1, 5);
+  } = useRequiredEstate(1, 1000);
 
+  // Sorting state (client-side for shown data)
   const [order, setOrder] = useState<Order>("asc");
   const [orderBy, setOrderBy] = useState<keyof Ad>("type");
+
+  // Local (virtual) pagination per section
+  const [salePage, setSalePage] = useState(0);
+  const [saleRows, setSaleRows] = useState(5);
+
+  const [rentPage, setRentPage] = useState(0);
+  const [rentRows, setRentRows] = useState(5);
+
+  const [reqPage, setReqPage] = useState(0);
+  const [reqRows, setReqRows] = useState(5);
+
+  // Optional adType filter
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [adTypeFilter, setAdTypeFilter] = useState<AdTypeFilter>("All");
+  const openFilter = Boolean(filterAnchorEl);
+
+  const handleFilterClick = (e: React.MouseEvent<HTMLElement>) => {
+    setFilterAnchorEl(e.currentTarget);
+  };
+  const handleFilterClose = () => setFilterAnchorEl(null);
+  const handleFilterChange = (type: AdTypeFilter) => {
+    setAdTypeFilter(type);
+    setFilterAnchorEl(null);
+    // reset local pagers so users see page 1 after changing filter
+    setSalePage(0);
+    setRentPage(0);
+  };
 
   const handleRequestSort = (field: keyof Ad) => {
     const isAsc = orderBy === field && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(field);
-    ads.sort((a, b) => {
-      const va = a[field];
-      const vb = b[field];
-      if (typeof va === "number" && typeof vb === "number") {
-        return (va - vb) * (isAsc ? 1 : -1);
-      }
-      return (String(va) < String(vb) ? -1 : 1) * (isAsc ? 1 : -1);
-    });
+    // No mutation here; sorting is done in useMemo below.
   };
 
-  const handlePageChange = (_: unknown, newPageZeroBased: number) => {
-    setPage(newPageZeroBased + 1);
-  };
-  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLimit(+e.target.value);
-    setPage(1);
-  };
+  // ---------- Build approved datasets ----------
+  const saleApproved = useMemo(() => {
+    const approved = ads.filter(a => a.TypeAccepte === "approved");
+    const onlySale = approved.filter(a => a.type === "Sale");
+    const filtered =
+      adTypeFilter === "All"
+        ? onlySale
+        : onlySale.filter(a => a.adType === adTypeFilter);
+    return sortStable(filtered, orderBy, order);
+  }, [ads, adTypeFilter, orderBy, order]);
 
-  const pendingAds = ads.filter((ad) => ad.TypeAccepte === "approved");
-  const saleAds = pendingAds.filter((ad) => ad.type === "Sale");
-  const rentAds = pendingAds.filter((ad) => ad.type === "Rent");
-  const requireAds = requireAdsRaw.filter(
-    (ad) => ad.TypeAccepte === "approved"
+  const rentApproved = useMemo(() => {
+    const approved = ads.filter(a => a.TypeAccepte === "approved");
+    const onlyRent = approved.filter(a => a.type === "Rent");
+    const filtered =
+      adTypeFilter === "All"
+        ? onlyRent
+        : onlyRent.filter(a => a.adType === adTypeFilter);
+    return sortStable(filtered, orderBy, order);
+  }, [ads, adTypeFilter, orderBy, order]);
+
+  const requireApproved = useMemo(() => {
+    const approved = requireAdsRaw.filter(a => a.TypeAccepte === "approved");
+    // Sort by the same field if it exists on AdRequire; fallback to "type"
+    const key = (orderBy as keyof AdRequire) ?? ("type" as keyof AdRequire);
+    return sortStable(approved as unknown as AdRequire[], key, order);
+  }, [requireAdsRaw, orderBy, order]);
+
+  // ---------- Slice for current local pages ----------
+  const salePageData = useMemo(
+    () => slice(saleApproved, salePage, saleRows),
+    [saleApproved, salePage, saleRows]
   );
 
-  const filteredSaleAds = saleAds.filter(
-    (ad) => adTypeFilter === "All" || ad.adType === adTypeFilter
-  );
-  const filteredRentAds = rentAds.filter(
-    (ad) => adTypeFilter === "All" || ad.adType === adTypeFilter
+  const rentPageData = useMemo(
+    () => slice(rentApproved, rentPage, rentRows),
+    [rentApproved, rentPage, rentRows]
   );
 
-  const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
-    setFilterAnchorEl(event.currentTarget);
-  };
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-  };
-  const handleFilterChange = (type: "All" | "Regular" | "Premium") => {
-    setAdTypeFilter(type);
-    handleFilterClose();
-  };
+  const reqPageData = useMemo(
+    () => slice(requireApproved, reqPage, reqRows),
+    [requireApproved, reqPage, reqRows]
+  );
 
   if (loading || requireLoading) return <LoadingScreen />;
   if (error) return <Alert severity="error">{error.message}</Alert>;
@@ -118,13 +158,13 @@ const ApprovalEstate: React.FC = () => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 4, pb: 4 }}>
-      {/* —— Sale Ads Section —— */}
+      {/* —— Sale (Approved) —— */}
       <LocalizedSectionHeader
         titleEn="Approved Sale Listings"
         titleAr="قائمة المبيعات الموافق عليها"
         countTextEn="properties after publication"
         countTextAr="عقار بعد النشر"
-        count={saleAds.length}
+        count={saleApproved.length}
         showFilterButton={
           <>
             <Button
@@ -145,48 +185,44 @@ const ApprovalEstate: React.FC = () => {
             >
               {lang === "ar" ? "الفلترة" : "Filter"}
             </Button>
-            <Menu
-              anchorEl={filterAnchorEl}
-              open={Boolean(filterAnchorEl)}
-              onClose={handleFilterClose}
-            >
+            <Menu anchorEl={filterAnchorEl} open={openFilter} onClose={handleFilterClose}>
               <MenuItem onClick={() => handleFilterChange("All")}>All</MenuItem>
-              <MenuItem onClick={() => handleFilterChange("Regular")}>
-                Regular
-              </MenuItem>
-              <MenuItem onClick={() => handleFilterChange("Premium")}>
-                Premium
-              </MenuItem>
+              <MenuItem onClick={() => handleFilterChange("Regular")}>Regular</MenuItem>
+              <MenuItem onClick={() => handleFilterChange("Premium")}>Premium</MenuItem>
             </Menu>
           </>
         }
       />
-      <EnhancedPropertyTable
+
+      <EnhancedPropertyTable<Ad>
         columns={saleColumns}
-        data={filteredSaleAds}
-        count={totalAds}
-        page={currentPage - 1}
-        rowsPerPage={limit}
+        data={salePageData}
+        count={saleApproved.length}     // ✅ only approved total
+        page={salePage}                 // ✅ local page (zero-based)
+        rowsPerPage={saleRows}
         order={order}
         orderBy={orderBy}
         onRequestSort={handleRequestSort}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        onPageChange={(_, p) => setSalePage(p)}
+        onRowsPerPageChange={(e) => {
+          setSaleRows(+e.target.value);
+          setSalePage(0);
+        }}
         refetch={refetch}
-        totalPages={pages}
         loading={false}
         error={null}
+        // totalPages not needed for local pagination
       />
 
       <Divider sx={{ my: 1 }} />
 
-      {/* —— Rent Ads Section —— */}
+      {/* —— Rent (Approved) —— */}
       <LocalizedSectionHeader
         titleEn="Approved Rent Listings"
         titleAr="قائمة الإيجارات الموافق عليها"
         countTextEn="properties after publication"
         countTextAr="عقار بعد النشر"
-        count={rentAds.length}
+        count={rentApproved.length}
         showFilterButton={
           <>
             <Button
@@ -207,81 +243,68 @@ const ApprovalEstate: React.FC = () => {
             >
               {lang === "ar" ? "الفلترة" : "Filter"}
             </Button>
-            <Menu
-              anchorEl={filterAnchorEl}
-              open={Boolean(filterAnchorEl)}
-              onClose={handleFilterClose}
-            >
+            <Menu anchorEl={filterAnchorEl} open={openFilter} onClose={handleFilterClose}>
               <MenuItem onClick={() => handleFilterChange("All")}>All</MenuItem>
-              <MenuItem onClick={() => handleFilterChange("Regular")}>
-                Regular
-              </MenuItem>
-              <MenuItem onClick={() => handleFilterChange("Premium")}>
-                Premium
-              </MenuItem>
+              <MenuItem onClick={() => handleFilterChange("Regular")}>Regular</MenuItem>
+              <MenuItem onClick={() => handleFilterChange("Premium")}>Premium</MenuItem>
             </Menu>
           </>
         }
       />
 
-      <EnhancedPropertyTable
+      <EnhancedPropertyTable<Ad>
         columns={rentColumns}
-        data={filteredRentAds}
-        count={totalAds}
-        page={currentPage - 1}
-        rowsPerPage={limit}
+        data={rentPageData}
+        count={rentApproved.length}     // ✅ only approved total
+        page={rentPage}
+        rowsPerPage={rentRows}
         order={order}
         orderBy={orderBy}
         onRequestSort={handleRequestSort}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        onPageChange={(_, p) => setRentPage(p)}
+        onRowsPerPageChange={(e) => {
+          setRentRows(+e.target.value);
+          setRentPage(0);
+        }}
         refetch={refetch}
-        totalPages={pages}
         loading={false}
         error={null}
       />
 
       <Divider sx={{ my: 1 }} />
 
-      {/* —— Require Ads Section —— */}
+      {/* —— Require (Approved) —— */}
       <LocalizedSectionHeader
         titleEn="Approved Require Listings"
         titleAr="قائمة الطلبات الموافق عليها"
         countTextEn="requirements after publication"
         countTextAr="طلبات بعد النشر"
-        count={requireAds.length}
+        count={requireApproved.length}
       />
-      <EnhancedPropertyTable
+
+      <EnhancedPropertyTable<AdRequire>
         columns={requireCols}
-        data={requireAds}
-        count={requireTotalDocs}
-        page={requireCurrentPage - 1}
-        rowsPerPage={requireLimit}
+        data={reqPageData}
+        count={requireApproved.length}  // ✅ only approved total
+        page={reqPage}
+        rowsPerPage={reqRows}
         order={order}
-        orderBy={orderBy as keyof AdRequire}
-        onRequestSort={handleRequestSort as (field: keyof AdRequire) => void}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
+        orderBy={(orderBy as keyof AdRequire) || ("type" as keyof AdRequire)}
+        onRequestSort={(f: keyof AdRequire) => {
+          // align with the same sort control
+          setOrderBy(f as keyof Ad);
+          setOrder(prev => (prev === "asc" ? "desc" : "asc"));
+        }}
+        onPageChange={(_, p) => setReqPage(p)}
+        onRowsPerPageChange={(e) => {
+          setReqRows(+e.target.value);
+          setReqPage(0);
+        }}
         refetch={refetch}
         loading={requireLoading}
         error={requireError?.message}
-        totalPages={requirePages}
         showViewButton={false}
       />
-
-      {/* <Fab
-        color="primary"
-        aria-label="add new estate"
-        onClick={() => navigate("/admin-panel/add-new-estate")}
-        sx={{
-          position: "fixed",
-          bottom: (theme) => theme.spacing(4),
-          right: (theme) => theme.spacing(4),
-          zIndex: 2000,
-        }}
-      >
-        <AddIcon style={{color: "white"}}/>
-      </Fab> */}
     </Box>
   );
 };

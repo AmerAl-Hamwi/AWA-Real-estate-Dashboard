@@ -17,30 +17,27 @@ import { useLanguage } from "@/contexts/language/LanguageContext";
 
 const AdminPannel: React.FC = () => {
   const { lang } = useLanguage();
-  // const isRtl = lang === "ar";
+  const [salePageLocal, setSalePageLocal] = useState(0);
+  const [saleRowsLocal, setSaleRowsLocal] = useState(5);
 
-  // 1) Fetch all ads, paginated
+  const [rentPageLocal, setRentPageLocal] = useState(0);
+  const [rentRowsLocal, setRentRowsLocal] = useState(5);
+
+  const [reqPageLocal, setReqPageLocal] = useState(0);
+  const [reqRowsLocal, setReqRowsLocal] = useState(5);
+
   const {
     ads,
-    pages: salePages,
-    currentPage: saleCurrentPage,
-    limit: saleLimit,
     loading: saleLoading,
     error: saleError,
-    setPage: setSalePage,
-    setLimit: setSaleLimit,
     refetch,
-  } = useAds(1, 5);
+  } = useAds(1, 1000); // was (1, 5)
 
-  // 2) Fetch required estate ads, paginated
   const {
     ads: requireAdsRaw,
-    pages: requirePages,
-    currentPage: requireCurrentPage,
-    limit: requireLimit,
     loading: requireLoading,
     error: requireError,
-  } = useRequiredEstate(1, 5);
+  } = useRequiredEstate(1, 1000); // was (1, 5)
 
   // 3) Local sorting state (client-side)
   const [order, setOrder] = useState<Order>("asc");
@@ -70,15 +67,6 @@ const AdminPannel: React.FC = () => {
     });
   };
 
-  // 5) Pagination callbacks
-  const handlePageChange = (_: unknown, newPageZeroBased: number) => {
-    setSalePage(newPageZeroBased + 1);
-  };
-  const handleRowsPerPageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSaleLimit(+e.target.value);
-    setSalePage(1);
-  };
-
   // 6) Approve / Reject wrappers that call our hook, then refetch on success
   const onAccept = async (id: string) => {
     try {
@@ -98,10 +86,20 @@ const AdminPannel: React.FC = () => {
   };
 
   // 7) Filter only those with TypeAccepte === "wait", then split by type
-  const pendingAds = ads.filter((ad) => ad.TypeAccepte === "wait");
-  const saleAds = pendingAds.filter((ad) => ad.type === "Sale");
-  const rentAds = pendingAds.filter((ad) => ad.type === "Rent");
-  const requireAds = requireAdsRaw.filter((ad) => ad.TypeAccepte === "wait");
+  const pendingAds = ads.filter((a) => a.TypeAccepte === "wait");
+  const salePending = pendingAds.filter((a) => a.type === "Sale");
+  const rentPending = pendingAds.filter((a) => a.type === "Rent");
+
+  const requirePending = requireAdsRaw.filter((a) => a.TypeAccepte === "wait");
+
+  // helper
+  const paginate = <T,>(arr: T[], page: number, rows: number) =>
+    arr.slice(page * rows, page * rows + rows);
+
+  // slices
+  const saleSlice = paginate(salePending, salePageLocal, saleRowsLocal);
+  const rentSlice = paginate(rentPending, rentPageLocal, rentRowsLocal);
+  const reqSlice = paginate(requirePending, reqPageLocal, reqRowsLocal);
 
   if (saleLoading || requireLoading) return <LoadingScreen />;
   if (saleError) return <Alert severity="error">{saleError.message}</Alert>;
@@ -115,27 +113,29 @@ const AdminPannel: React.FC = () => {
         <SectionHeader
           titleEn="Pending Sale Listings"
           titleAr="قائمة المبيعات المعلقة"
-          count={saleAds.length}
+          count={salePending.length}
         />
 
         <EnhancedPropertyTable
           columns={getSaleColumns(lang)}
-          data={saleAds}
-          count={saleAds.length}
-          page={saleCurrentPage - 1}
-          rowsPerPage={saleLimit}
+          data={saleSlice} // sliced pending
+          count={salePending.length} // total pending (not total from API)
+          page={salePageLocal} // local page (zero-based)
+          rowsPerPage={saleRowsLocal}
           order={order}
           orderBy={orderBy}
           onRequestSort={handleRequestSort}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
+          onPageChange={(_, p) => setSalePageLocal(p)}
+          onRowsPerPageChange={(e) => {
+            setSaleRowsLocal(+e.target.value);
+            setSalePageLocal(0);
+          }}
           onAccept={onAccept}
           onReject={onReject}
           processingIds={processingIds}
           completedIds={completedIds}
           loading={false}
           error={null}
-          totalPages={salePages}
         />
 
         <Divider sx={{ my: 1 }} />
@@ -144,27 +144,29 @@ const AdminPannel: React.FC = () => {
         <SectionHeader
           titleEn="Pending Rental Listings"
           titleAr="قائمة الإيجارات المعلقة"
-          count={rentAds.length}
+          count={rentPending.length}
         />
 
         <EnhancedPropertyTable
           columns={getRentColumns(lang)}
-          data={rentAds}
-          count={rentAds.length}
-          page={saleCurrentPage - 1}
-          rowsPerPage={saleLimit}
+          data={rentSlice}
+          count={rentPending.length}
+          page={rentPageLocal}
+          rowsPerPage={rentRowsLocal}
           order={order}
           orderBy={orderBy}
           onRequestSort={handleRequestSort}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
+          onPageChange={(_, p) => setRentPageLocal(p)}
+          onRowsPerPageChange={(e) => {
+            setRentRowsLocal(+e.target.value);
+            setRentPageLocal(0);
+          }}
           onAccept={onAccept}
           onReject={onReject}
           processingIds={processingIds}
           completedIds={completedIds}
           loading={false}
           error={null}
-          totalPages={salePages}
         />
 
         <Divider sx={{ my: 1 }} />
@@ -173,27 +175,29 @@ const AdminPannel: React.FC = () => {
         <SectionHeader
           titleEn="Pending Require Listings"
           titleAr="قائمة الطلبات المعلقة"
-          count={requireAds.length}
+          count={requirePending.length}
         />
 
         <EnhancedPropertyTable
           columns={getRequireColumns(lang)}
-          data={requireAds}
-          count={requireAds.length}
-          page={requireCurrentPage - 1}
-          rowsPerPage={requireLimit}
+          data={reqSlice}
+          count={requirePending.length}
+          page={reqPageLocal}
+          rowsPerPage={reqRowsLocal}
           order={order}
           orderBy={orderBy as keyof AdRequire}
-          onRequestSort={handleRequestSort as (field: keyof AdRequire) => void}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
+          onRequestSort={handleRequestSort as (f: keyof AdRequire) => void}
+          onPageChange={(_, p) => setReqPageLocal(p)}
+          onRowsPerPageChange={(e) => {
+            setReqRowsLocal(+e.target.value);
+            setReqPageLocal(0);
+          }}
           onAccept={approveRequireAd}
           onReject={rejectRequireAd}
           processingIds={requireProcessingIds}
           completedIds={requireCompletedIds}
           loading={requireLoading}
           error={requireError?.message}
-          totalPages={requirePages}
           showViewButton={false}
         />
       </>
