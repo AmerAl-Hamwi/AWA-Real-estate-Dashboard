@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -11,11 +11,17 @@ import {
   CircularProgress,
   Box,
   Typography,
+  InputAdornment,
+  Avatar,
+  FormHelperText,
+  Grid,
 } from "@mui/material";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { useProvinces } from "@/hooks/api/user/useProvinces";
 import { ManualUserPayload } from "@hooks/api/user/useManualUserRegister";
+import { styled } from "@mui/material/styles";
 
+// Define Props interface
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -25,6 +31,18 @@ interface Props {
 }
 
 const userTypes = ["owner", "real estate company"] as const;
+
+const VisuallyHiddenInput = styled("input")({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
 
 const ManualUserDialog: React.FC<Props> = ({
   open,
@@ -45,11 +63,25 @@ const ManualUserDialog: React.FC<Props> = ({
   });
 
   const { provinces, loading: provLoading } = useProvinces();
-  const selectedProvince = provinces.find(p => p.id === form.province);
+  const selectedProvince = provinces.find((p) => p.id === form.province);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const isFormValid = useMemo(() => {
+    const basicFields =
+      form.name &&
+      form.email &&
+      form.number &&
+      form.province &&
+      form.city &&
+      form.subscriptionAmount;
+    if (form.userType === "real estate company") {
+      return basicFields && form.image;
+    }
+    return basicFields;
+  }, [form]);
 
   useEffect(() => {
     if (!open) {
-      // reset when closing
       setForm({
         name: "",
         email: "",
@@ -60,14 +92,27 @@ const ManualUserDialog: React.FC<Props> = ({
         subscriptionAmount: "",
         image: undefined,
       });
+      setLogoPreview(null);
     }
   }, [open]);
 
-  const handleChange = (field: keyof ManualUserPayload) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setForm({ ...form, [field]: e.target.value });
-  };
+  useEffect(() => {
+    if (!form.image) {
+      setLogoPreview(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(form.image);
+    setLogoPreview(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [form.image]);
+
+  const handleChange =
+    (field: keyof ManualUserPayload) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm({ ...form, [field]: e.target.value });
+    };
 
   const handleProvince = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, province: e.target.value, city: "" });
@@ -79,99 +124,237 @@ const ManualUserDialog: React.FC<Props> = ({
     }
   };
 
+  const removeImage = () => {
+    setForm({ ...form, image: undefined });
+    setLogoPreview(null);
+  };
+
   const submit = () => onSubmit(form);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Add User Manually</DialogTitle>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: 3 } }}
+    >
+      <DialogTitle
+        variant="h5"
+        sx={{
+          bgcolor: "primary.main",
+          color: "common.white",
+          py: 2,
+          borderTopLeftRadius: "inherit",
+          borderTopRightRadius: "inherit",
+        }}
+      >
+        Add User Manually
+      </DialogTitle>
+
+      <DialogContent dividers sx={{ py: 3 }}>
         {provLoading ? (
-          <Box display="flex" justifyContent="center"><CircularProgress /></Box>
+          <Box display="flex" justifyContent="center" py={4}>
+            <CircularProgress size={48} />
+          </Box>
         ) : (
-          <Stack spacing={2} mt={1}>
+          <Stack spacing={3} mt={1}>
             {error && (
-              <Typography color="error" variant="body2">{error}</Typography>
+              <Typography
+                color="error"
+                variant="body2"
+                sx={{
+                  bgcolor: "error.light",
+                  py: 1,
+                  px: 2,
+                  borderRadius: 1,
+                  fontWeight: 500,
+                }}
+              >
+                {error}
+              </Typography>
             )}
 
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Full Name *"
+                  fullWidth
+                  value={form.name}
+                  onChange={handleChange("name")}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label="Email *"
+                  fullWidth
+                  type="email"
+                  value={form.email}
+                  onChange={handleChange("email")}
+                  variant="outlined"
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+
             <TextField
-              label="Name" fullWidth
-              value={form.name}
-              onChange={handleChange("name")}
-            />
-            <TextField
-              label="Email" fullWidth
-              value={form.email}
-              onChange={handleChange("email")}
-            />
-            <TextField
-              label="Phone Number" fullWidth
+              label="Phone Number *"
+              fullWidth
               value={form.number}
               onChange={handleChange("number")}
+              variant="outlined"
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">+1</InputAdornment>
+                ),
+              }}
             />
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  select
+                  label="Province *"
+                  fullWidth
+                  value={form.province}
+                  onChange={handleProvince}
+                  variant="outlined"
+                  size="small"
+                >
+                  {provinces.map((p) => (
+                    <MenuItem key={p.id} value={p.id}>
+                      {p.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  select
+                  label="City *"
+                  fullWidth
+                  value={form.city}
+                  onChange={handleChange("city")}
+                  disabled={!form.province}
+                  variant="outlined"
+                  size="small"
+                >
+                  {selectedProvince?.cities.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+            </Grid>
+
             <TextField
-              select label="Province" fullWidth
-              value={form.province}
-              onChange={handleProvince}
-            >
-              {provinces.map(p => (
-                <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select label="City" fullWidth
-              value={form.city}
-              onChange={handleChange("city")}
-              disabled={!form.province}
-            >
-              {selectedProvince?.cities.map(c => (
-                <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select label="User Type" fullWidth
+              select
+              label="User Type *"
+              fullWidth
               value={form.userType}
               onChange={handleChange("userType")}
+              variant="outlined"
+              size="small"
             >
-              {userTypes.map(type => (
-                <MenuItem key={type} value={type}>{type}</MenuItem>
+              {userTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                </MenuItem>
               ))}
             </TextField>
 
             {form.userType === "real estate company" && (
-              <Button
-                variant="outlined"
-                component="label"
-                startIcon={<UploadFileIcon />}
-              >
-                {form.image?.name || "Upload Logo"}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleFile}
-                />
-              </Button>
+              <Box>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Company Logo *
+                </Typography>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar
+                    variant="rounded"
+                    src={logoPreview || undefined}
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      bgcolor: logoPreview ? "transparent" : "action.hover",
+                    }}
+                  >
+                    {!logoPreview && <CloudUploadIcon />}
+                  </Avatar>
+
+                  <Box>
+                    <Button
+                      component="label"
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<CloudUploadIcon />}
+                      sx={{ mr: 2 }}
+                    >
+                      Upload Logo
+                      <VisuallyHiddenInput
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFile}
+                      />
+                    </Button>
+
+                    {logoPreview && (
+                      <Button
+                        variant="text"
+                        color="error"
+                        onClick={removeImage}
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </Box>
+                </Stack>
+                <FormHelperText>JPG, PNG or GIF (Max 5MB)</FormHelperText>
+              </Box>
             )}
 
             <TextField
-              label="Subscription Amount"
+              label="Subscription Amount *"
               fullWidth
               type="number"
               value={form.subscriptionAmount}
               onChange={handleChange("subscriptionAmount")}
+              variant="outlined"
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+                inputProps: { min: 0, step: 0.01 },
+              }}
             />
           </Stack>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={loading}>Cancel</Button>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          variant="outlined"
+          sx={{ borderRadius: 2, px: 3 }}
+        >
+          Cancel
+        </Button>
         <Button
           onClick={submit}
           variant="contained"
-          disabled={loading}
+          disabled={loading || !isFormValid}
+          sx={{ borderRadius: 2, px: 4 }}
         >
-          {loading ? <CircularProgress size={20} color="inherit"/> : "Save"}
+          {loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            "Create User"
+          )}
         </Button>
       </DialogActions>
     </Dialog>
