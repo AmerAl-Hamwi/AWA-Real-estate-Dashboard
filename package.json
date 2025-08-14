@@ -25,6 +25,7 @@
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-dropzone-uploader": "^2.11.0",
+    "react-modal-image": "^2.6.0",
     "react-router-dom": "^7.6.0"
   },
   "devDependencies": {

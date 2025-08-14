@@ -1,4 +1,5 @@
 export interface Category {
+  thumbnailUrl: any;
   id: string;
   "name[en]": string;
   "name[ar]": string;

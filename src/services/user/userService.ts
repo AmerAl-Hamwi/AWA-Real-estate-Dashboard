@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { AxiosError } from "axios";
 import { User } from "@/types/user";
 
@@ -27,18 +28,23 @@ api.interceptors.response.use(
 /**
  * Fetches paginated users, filtered by subscription state.
  */
+
 export const getFilteredUsers = async (
   page: number,
   limit: number,
-  hasSubscription?: boolean
+  hasSubscription?: boolean,
+  number?: string,
+  signal?: AbortSignal // NEW
 ): Promise<{ users: User[]; total: number }> => {
+  const params: Record<string, any> = { page, limit };
+  if (hasSubscription !== undefined) params.hasSubscription = hasSubscription;
+  if (number && number.trim()) params.number = number;
+
   const { data } = await api.get("/users/get-filtered-users", {
-    params: {
-      page,
-      limit,
-      ...(hasSubscription !== undefined && { hasSubscription }),
-    },
+    params,
+    signal,
   });
+
   return {
     users: data.data.users,
     total: data.data.pagination.totalUsers,
