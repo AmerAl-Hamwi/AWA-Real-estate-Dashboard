@@ -83,6 +83,15 @@ const EnhancedPropertyTable = <T extends WithId>({
     }
   };
 
+  const formatNumber = (value: unknown) => {
+    const n = typeof value === "string" ? Number(value) : (value as number);
+    if (Number.isNaN(n) || n == null) return "—";
+    // en-US gives you 1,234,567 style commas
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+      n
+    );
+  };
+
   // Show spinner / error if necessary
   if (loading) {
     return (
@@ -205,12 +214,30 @@ const EnhancedPropertyTable = <T extends WithId>({
                           {periods.map((rp) => (
                             <Chip
                               key={rp._id}
-                              label={`${rp.period}: ${rp.priceSYP}/SYP, ${rp.priceUSD}/USD`}
+                              label={`${rp.period}: ${rp.priceSYP.toLocaleString()}/SYP, ${rp.priceUSD.toLocaleString()}/USD`}
                               size="small"
                               sx={{ mb: 0.5 }}
                             />
                           ))}
                         </Box>
+                      </TableCell>
+                    );
+                  }
+
+                  if (
+                    col.field === "priceSYP" ||
+                    col.field === "priceUSD" ||
+                    col.field === "Minprice" ||
+                    col.field === "Maxprice" 
+
+                  ) {
+                    return (
+                      <TableCell
+                        key={String(col.field)}
+                        align="left"
+                        sx={{ p: 1 }}
+                      >
+                        {formatNumber(val)}
                       </TableCell>
                     );
                   }
