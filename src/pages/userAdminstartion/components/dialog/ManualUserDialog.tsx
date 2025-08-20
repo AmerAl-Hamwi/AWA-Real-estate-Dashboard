@@ -129,7 +129,13 @@ const ManualUserDialog: React.FC<Props> = ({
     setLogoPreview(null);
   };
 
-  const submit = () => onSubmit(form);
+  const submit = () => {
+    const payload: ManualUserPayload = {
+      ...form,
+      number: `+963${form.number.replace(/^(\+?963)?/, "")}`, // ensures only one +963
+    };
+    onSubmit(payload);
+  };
 
   return (
     <Dialog
@@ -208,8 +214,9 @@ const ManualUserDialog: React.FC<Props> = ({
               size="small"
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">+1</InputAdornment>
+                  <InputAdornment position="start">+963</InputAdornment>
                 ),
+                inputMode: "numeric",
               }}
             />
 
@@ -326,7 +333,7 @@ const ManualUserDialog: React.FC<Props> = ({
               size="small"
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">$</InputAdornment>
+                  <InputAdornment position="start">SYP</InputAdornment>
                 ),
                 inputProps: { min: 0, step: 0.01 },
               }}

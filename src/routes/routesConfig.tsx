@@ -16,6 +16,7 @@ const CategoryPage = lazy(() => import("@pages/categoryPage/index"));
 const ExternalAds = lazy(() => import("@pages/externalAds/index"));
 const BannerPage = lazy(() => import("@pages/bannersPage/index"));
 const UserAdminstartion = lazy(() => import("@pages/userAdminstartion/index"));
+const ReleaseVersionsPage = lazy(() => import("@pages/versionPage/index"));
 const NotFoundPage = lazy(() => import("@pages/pageNotFound"));
 
 export default function AppRoutes() {
@@ -39,6 +40,7 @@ export default function AppRoutes() {
             <Route path="/category-management" element={<CategoryPage />} />
             <Route path="/get-all-banners" element={<BannerPage />} />
             <Route path="/user/get-all-users" element={<UserAdminstartion />} />
+            <Route path="/release-versions" element={<ReleaseVersionsPage />} />
           </Route>
         </Route>
 
