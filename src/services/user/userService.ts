@@ -96,9 +96,7 @@ export const registerManualUser = async (payload: {
 };
 
 export const deleteUserById = async (userId: string): Promise<void> => {
-  await api.delete(`/users/delete-user`, {
-    params: { userId },
-  });
+  await api.delete(`/users/delete-user-ads/${userId}`);
 };
 
 /**
